@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.devmanchego</groupId>
+  <artifactId>javaguard-parent</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+
+  <name>JavaGuardCLI (parent)</name>
+  <description>A quality gate for AI coding agents working on Java code.</description>
+
+  <modules>
+    <module>javaguard-core</module>
+    <module>javaguard-cli</module>
+    <module>javaguard-dist</module>
+  </modules>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Alejandro Alberca Manzaneque</name>
+    </developer>
+  </developers>
+
+  <properties>
+    <!-- Build -->
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <!--
+      Dependency and plugin versions below were checked against Maven Central
+      on 2026-09-27 (spec 01-SPECIFICATION.md, Phase 0). Bump deliberately;
+      do not let them drift silently (see AGENTS/CLAUDE.md testing principles:
+      fixtures and the tool itself pin exact versions).
+    -->
+    <picocli.version>4.7.7</picocli.version>
+    <jackson.version>2.19.0</jackson.version>
+    <javaparser.version>3.27.0</javaparser.version>
+    <pmd.version>7.13.0</pmd.version>
+    <errorprone.version>2.50.0</errorprone.version>
+    <spotbugs.version>4.9.3</spotbugs.version>
+    <findsecbugs.version>1.14.0</findsecbugs.version>
+    <java-diff-utils.version>4.15</java-diff-utils.version>
+    <slf4j.version>2.0.17</slf4j.version>
+
+    <junit-bom.version>5.12.2</junit-bom.version>
+    <assertj.version>3.27.3</assertj.version>
+    <mockito.version>5.18.0</mockito.version>
+    <!-- Test-only oracles for the migration rules (plan Phase 23): the versions Spring Boot 3.3.4 manages. -->
+    <flyway.version>10.10.0</flyway.version>
+    <liquibase.version>4.27.0</liquibase.version>
+    <h2.version>2.2.224</h2.version>
+
+    <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
+    <maven-jlink-plugin.version>3.2.0</maven-jlink-plugin.version>
+    <launch4j-maven-plugin.version>2.6.0</launch4j-maven-plugin.version>
+    <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
+    <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
+    <exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
+    <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.5.2</maven-failsafe-plugin.version>
+    <maven-jar-plugin.version>3.4.1</maven-jar-plugin.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Internal modules -->
+      <dependency>
+        <groupId>com.devmanchego</groupId>
+        <artifactId>javaguard-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <!-- CLI -->
+      <dependency>
+        <groupId>info.picocli</groupId>
+        <artifactId>picocli</artifactId>
+        <version>${picocli.version}</version>
+      </dependency>
+
+      <!-- JSON / YAML -->
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- AST -->
+      <dependency>
+        <groupId>com.github.javaparser</groupId>
+        <artifactId>javaparser-core</artifactId>
+        <version>${javaparser.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.javaparser</groupId>
+        <artifactId>javaparser-symbol-solver-core</artifactId>
+        <version>${javaparser.version}</version>
+      </dependency>
+
+      <!-- Static analysis engines -->
+      <dependency>
+        <groupId>net.sourceforge.pmd</groupId>
+        <artifactId>pmd-java</artifactId>
+        <version>${pmd.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.errorprone</groupId>
+        <artifactId>error_prone_core</artifactId>
+        <version>${errorprone.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs</artifactId>
+        <version>${spotbugs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.h3xstream.findsecbugs</groupId>
+        <artifactId>findsecbugs-plugin</artifactId>
+        <version>${findsecbugs.version}</version>
+      </dependency>
+
+      <!-- Diff -->
+      <dependency>
+        <groupId>io.github.java-diff-utils</groupId>
+        <artifactId>java-diff-utils</artifactId>
+        <version>${java-diff-utils.version}</version>
+      </dependency>
+
+      <!-- Logging -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jdk14</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <!-- Tests -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <version>${mockito.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- Every module gets a working test stack for free. -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven-compiler-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+          <configuration>
+            <!-- Integration tests (real Maven/Gradle fixtures) are excluded by
+                 default; run them with -Pintegration (spec 04, testing principles). -->
+            <excludedGroups>integration</excludedGroups>
+            <!-- Error Prone reads javac internals (specification section 8.2); JDK 16+
+                 needs these module-access flags for both our tests and, packaged, the
+                 javaguard launcher itself (Phase 0's Launch4j jvmOptions mirror this). -->
+            <argLine>-Dfile.encoding=UTF-8
+              -Djavaguard.notifications=off
+              --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+              --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+              --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
+              --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
+            </argLine>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${maven-failsafe-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>${maven-shade-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jlink-plugin</artifactId>
+          <version>${maven-jlink-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>${maven-assembly-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>${maven-antrun-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>${exec-maven-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>com.akathist.maven.plugins.launch4j</groupId>
+          <artifactId>launch4j-maven-plugin</artifactId>
+          <version>${launch4j-maven-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <profiles>
+    <!-- mvn -Pintegration verify : adds tests tagged "integration" (need
+         Maven/Gradle on PATH; run against real fixture projects). -->
+    <profile>
+      <id>integration</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludedGroups combine.self="override"></excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- mvn -Pdist package : builds the distributable artifacts
+         (javaguard-dist module only takes effect there). -->
+    <profile>
+      <id>dist</id>
+    </profile>
+  </profiles>
+</project>

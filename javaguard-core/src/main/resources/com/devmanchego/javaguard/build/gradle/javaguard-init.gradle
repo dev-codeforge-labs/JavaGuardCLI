@@ -1,0 +1,28 @@
+// JavaGuardCLI init script, passed to Gradle with --init-script (never written into the project).
+// Plain Groovy so that it works whichever DSL the project's own build files use.
+allprojects {
+    // A module without a test for the requested class is not an error: the end-of-turn gate selects classes for the
+    // whole change and each module only runs the ones it has.
+    tasks.withType(Test).configureEach {
+        filter.failOnNoMatchingTests = false
+    }
+
+    // :<module>:javaguardClasspath writes the resolved classpaths to the file named by -Djavaguard.out:
+    //   compile=<jars, path-separated>
+    //   test=<jars and directories, path-separated>
+    pluginManager.withPlugin('java') {
+        tasks.register('javaguardClasspath') {
+            doLast {
+                def out = System.getProperty('javaguard.out')
+                if (out == null) {
+                    throw new GradleException('javaguard.out is not set')
+                }
+                def sets = project.extensions.getByName('sourceSets')
+                def compile = sets.getByName('main').compileClasspath.files
+                def test = sets.getByName('test').runtimeClasspath.files
+                new File(out).text = 'compile=' + compile.join(File.pathSeparator) + '\n' +
+                        'test=' + test.join(File.pathSeparator) + '\n'
+            }
+        }
+    }
+}

@@ -1,0 +1,81 @@
+# Codex: contracts section 5.3. Always exit 0; blocking travels as JSON decision "block".
+=== pre-edit PASS
+exit: 0
+--- stdout
+--- stderr
+=== pre-edit BLOCK
+exit: 0
+--- stdout
+--- stderr
+=== post-edit PASS
+exit: 0
+--- stdout
+--- stderr
+=== post-edit ADVISE
+exit: 0
+--- stdout
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"JAVAGUARD ADVISE - 0 blocking, 1 advisory - post-edit - 1 file(s)\n1. [JG-PERF-001 String concatenation in loop] src/main/java/com/acme/ReportBuilder.java:118\n   Fix: use a StringBuilder declared before the loop."}}
+--- stderr
+=== post-edit BLOCK
+exit: 0
+--- stdout
+{"decision":"block","reason":"JAVAGUARD BLOCK - 1 blocking, 0 advisory - post-edit - 1 file(s)\n1. [JG-SEC-001 SQL built by concatenation] src/main/java/com/acme/UserDao.java:42\n   > String sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";\n   Fix: use a PreparedStatement."}
+--- stderr
+=== post-edit HALT
+exit: 0
+--- stdout
+{"continue":false,"stopReason":"JavaGuard halted the agent: the same blocking problem persisted for 5 attempts. Handoff: AI_HANDOFF_CONTEXT.md","systemMessage":"JavaGuard halted the agent: the same blocking problem persisted for 5 attempts. Handoff: AI_HANDOFF_CONTEXT.md"}
+--- stderr
+=== end-of-turn PASS
+exit: 0
+--- stdout
+--- stderr
+=== end-of-turn ADVISE
+exit: 0
+--- stdout
+{"systemMessage":"JAVAGUARD ADVISE - 0 blocking, 1 advisory - post-edit - 1 file(s)"}
+--- stderr
+=== end-of-turn BLOCK
+exit: 0
+--- stdout
+{"decision":"block","reason":"JAVAGUARD BLOCK - 1 blocking, 0 advisory - post-edit - 1 file(s)\n1. [JG-SEC-001 SQL built by concatenation] src/main/java/com/acme/UserDao.java:42\n   > String sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";\n   Fix: use a PreparedStatement."}
+--- stderr
+=== end-of-turn HALT
+exit: 0
+--- stdout
+{"continue":false,"stopReason":"JavaGuard halted the agent: the same blocking problem persisted for 5 attempts. Handoff: AI_HANDOFF_CONTEXT.md","systemMessage":"JavaGuard halted the agent: the same blocking problem persisted for 5 attempts. Handoff: AI_HANDOFF_CONTEXT.md"}
+--- stderr
+=== post-edit ADVISE notices+bell
+exit: 0
+--- stdout
+{"systemMessage":"New suppression added this session: JG-SEC-001 at src/main/java/com/acme/UserDao.java:41","hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"JAVAGUARD ADVISE - 0 blocking, 1 advisory - post-edit - 1 file(s)\n1. [JG-PERF-001 String concatenation in loop] src/main/java/com/acme/ReportBuilder.java:118\n   Fix: use a StringBuilder declared before the loop."}}
+--- stderr
+=== post-edit BLOCK notices+bell
+exit: 0
+--- stdout
+{"decision":"block","reason":"JAVAGUARD BLOCK - 1 blocking, 0 advisory - post-edit - 1 file(s)\n1. [JG-SEC-001 SQL built by concatenation] src/main/java/com/acme/UserDao.java:42\n   > String sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";\n   Fix: use a PreparedStatement.","systemMessage":"New suppression added this session: JG-SEC-001 at src/main/java/com/acme/UserDao.java:41"}
+--- stderr
+=== end-of-turn ADVISE notices
+exit: 0
+--- stdout
+{"systemMessage":"JAVAGUARD ADVISE - 0 blocking, 1 advisory - post-edit - 1 file(s)\nNew suppression added this session: JG-SEC-001 at src/main/java/com/acme/UserDao.java:41"}
+--- stderr
+=== post-edit PASS notices
+exit: 0
+--- stdout
+{"systemMessage":"New suppression added this session: JG-SEC-001 at src/main/java/com/acme/UserDao.java:41"}
+--- stderr
+=== end-of-turn PASS notices
+exit: 0
+--- stdout
+{"systemMessage":"New suppression added this session: JG-SEC-001 at src/main/java/com/acme/UserDao.java:41"}
+--- stderr
+=== pre-edit PASS notices
+exit: 0
+--- stdout
+--- stderr
+=== internal-error
+exit: 0
+--- stdout
+{"systemMessage":"JavaGuard internal error, check .javaguard/logs/javaguard.log"}
+--- stderr

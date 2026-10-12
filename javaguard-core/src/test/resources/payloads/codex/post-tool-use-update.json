@@ -1,0 +1,14 @@
+{
+  "session_id": "codex-019a",
+  "transcript_path": null,
+  "cwd": "${PROJECT}",
+  "hook_event_name": "PostToolUse",
+  "model": "gpt-5.5-codex",
+  "permission_mode": "workspace-write",
+  "turn_id": "turn-42",
+  "tool_name": "apply_patch",
+  "tool_input": {
+    "command": "*** Begin Patch\n*** Update File: src/main/java/com/acme/UserDao.java\n@@ class UserDao\n   List<User> find(String name) {\n-    String sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";\n-    return jdbc.query(sql, mapper);\n+    return jdbc.query(\"SELECT * FROM users WHERE name = ?\", mapper, name);\n   }\n@@\n   void delete(long id) {\n-    jdbc.update(\"DELETE FROM users WHERE id = \" + id);\n+    jdbc.update(\"DELETE FROM users WHERE id = ?\", id);\n   }\n*** End Patch\n"
+  },
+  "tool_response": "Success. Updated the following files:\nM src/main/java/com/acme/UserDao.java\n"
+}

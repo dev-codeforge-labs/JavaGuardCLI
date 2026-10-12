@@ -1,0 +1,18 @@
+[ERROR] COMPILATION ERROR : 
+[ERROR] @ROOT@/module-b/src/main/java/com/acme/moduleb/Bar.java:[7,25] cannot find symbol
+  symbol:   method value()
+  location: class com.acme.modulea.Foo
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.8.1:compile (default-compile) on project module-b: Compilation failure
+[ERROR] @ROOT@/module-b/src/main/java/com/acme/moduleb/Bar.java:[7,25] cannot find symbol
+[ERROR]   symbol:   method value()
+[ERROR]   location: class com.acme.modulea.Foo
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :module-b

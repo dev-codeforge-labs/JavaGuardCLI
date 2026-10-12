@@ -1,0 +1,11 @@
+{
+  "agent": "CLAUDE",
+  "gate": "END_OF_TURN",
+  "sessionId": "3f2c9a1e-claude-session",
+  "cwd": "${PROJECT}",
+  "transcriptPath": "${PROJECT}/.claude/transcript.jsonl",
+  "toolName": "",
+  "changes": [],
+  "stopHookActive": true,
+  "lastAssistantMessage": "I fixed the query and the tests pass."
+}

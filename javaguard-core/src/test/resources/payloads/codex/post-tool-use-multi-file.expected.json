@@ -1,0 +1,20 @@
+{
+  "agent": "CODEX",
+  "gate": "POST_EDIT",
+  "sessionId": "codex-019a",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "apply_patch",
+  "changes": [
+    { "path": "${PROJECT}/src/main/java/com/acme/user/UserQueries.java", "type": "ADD", "movedFrom": null, "fragments": [] },
+    {
+      "path": "${PROJECT}/src/main/java/com/acme/user/UserService.java",
+      "type": "MOVE",
+      "movedFrom": "${PROJECT}/src/main/java/com/acme/UserService.java",
+      "fragments": [ { "oldText": "package com.acme;", "newText": "package com.acme.user;", "replaceAll": false } ]
+    },
+    { "path": "${PROJECT}/src/test/java/com/acme/LegacyUserTest.java", "type": "DELETE", "movedFrom": null, "fragments": [] }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

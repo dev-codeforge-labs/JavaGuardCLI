@@ -1,0 +1,20 @@
+{
+  "session_id": "gemini-7c1d",
+  "transcript_path": "${PROJECT}${SEP}.gemini${SEP}chat.json",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "AfterTool",
+  "timestamp": "2026-09-28T09:15:02.123Z",
+  "tool_name": "replace",
+  "tool_input": {
+    "file_path": "${PROJECT}${SEP}src${SEP}main${SEP}java${SEP}com${SEP}acme${SEP}UserDao.java",
+    "old_string": "Statement st = conn.createStatement();",
+    "new_string": "PreparedStatement st = conn.prepareStatement(SQL);",
+    "expected_replacements": 1
+  },
+  "tool_response": {
+    "llmContent": "Successfully modified file",
+    "returnDisplay": "diff ..."
+  },
+  "mcp_context": null,
+  "original_request_name": "replace"
+}

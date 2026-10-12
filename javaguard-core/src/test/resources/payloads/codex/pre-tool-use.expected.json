@@ -1,0 +1,18 @@
+{
+  "agent": "CODEX",
+  "gate": "PRE_EDIT",
+  "sessionId": "codex-019a",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "apply_patch",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/main/java/com/acme/Foo.java",
+      "type": "UPDATE",
+      "movedFrom": null,
+      "fragments": [ { "oldText": "int x = 1;", "newText": "int x = 2;", "replaceAll": false } ]
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

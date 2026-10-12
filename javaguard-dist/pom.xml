@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.devmanchego</groupId>
+    <artifactId>javaguard-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>javaguard-dist</artifactId>
+  <packaging>jar</packaging>
+
+  <name>JavaGuardCLI :: dist</name>
+  <description>
+    Packaging: shade -&gt; jlink -&gt; AppCDS -&gt; Launch4j -&gt; zip (specification
+    section 21). The real distribution is built in Phase 19; this module also
+    hosts the throwaway Phase 0 packaging spike (com.devmanchego.javaguard.dist.spike)
+    that validates the stdin/stdout/exit-code plumbing of a Launch4j console
+    executable before any real code depends on it.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.devmanchego</groupId>
+      <artifactId>javaguard-cli</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+    </dependency>
+  </dependencies>
+
+  <properties>
+    <!-- Phase 0 spike only: minimal module set for a class that uses nothing
+         but java.base. The real distribution's module list is computed in
+         Phase 19 (specification section 21.2) from jdeps against the actual
+         fat jar, plus the explicit list that section requires. -->
+    <spike.finalName>echospike</spike.finalName>
+  </properties>
+
+  <build>
+    <finalName>${spike.finalName}</finalName>
+  </build>
+
+  <profiles>
+    <!--
+      mvn -Ppackaging-spike -pl javaguard-dist package
+
+      Builds: target/echospike.jar (shaded) -> target/spike-runtime/ (jlink)
+      -> target/echospike.exe (Launch4j). See .private/spec/notes/packaging-spike.md
+      for the measurements this profile exists to produce.
+    -->
+    <profile>
+      <id>packaging-spike</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals><goal>shade</goal></goals>
+                <configuration>
+                  <artifactSet>
+                    <excludes>
+                      <exclude>*:*</exclude>
+                    </excludes>
+                  </artifactSet>
+                  <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                      <mainClass>com.devmanchego.javaguard.dist.spike.EchoSpike</mainClass>
+                    </transformer>
+                  </transformers>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <!-- jlink refuses to overwrite an existing output directory,
+                   so a stale one from a previous run is removed first. -->
+              <execution>
+                <id>spike-clean-runtime</id>
+                <phase>prepare-package</phase>
+                <goals><goal>exec</goal></goals>
+                <configuration>
+                  <executable>cmd</executable>
+                  <arguments>
+                    <argument>/c</argument>
+                    <argument>if exist "${project.build.directory}\spike-runtime" rmdir /s /q "${project.build.directory}\spike-runtime"</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>spike-jlink</id>
+                <phase>package</phase>
+                <goals><goal>exec</goal></goals>
+                <configuration>
+                  <executable>${java.home}/bin/jlink</executable>
+                  <arguments>
+                    <argument>--module-path</argument>
+                    <argument>${java.home}/jmods</argument>
+                    <argument>--add-modules</argument>
+                    <argument>java.base</argument>
+                    <argument>--output</argument>
+                    <argument>${project.build.directory}/spike-runtime</argument>
+                    <argument>--strip-debug</argument>
+                    <argument>--no-man-pages</argument>
+                    <argument>--no-header-files</argument>
+                    <argument>--compress</argument>
+                    <argument>zip-6</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>com.akathist.maven.plugins.launch4j</groupId>
+            <artifactId>launch4j-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>spike-l4j</id>
+                <phase>package</phase>
+                <goals><goal>launch4j</goal></goals>
+                <configuration>
+                  <headerType>console</headerType>
+                  <outfile>${project.build.directory}/${spike.finalName}.exe</outfile>
+                  <jar>${project.build.directory}/${spike.finalName}.jar</jar>
+                  <errTitle>JavaGuard packaging spike</errTitle>
+                  <classPath>
+                    <mainClass>com.devmanchego.javaguard.dist.spike.EchoSpike</mainClass>
+                  </classPath>
+                  <jre>
+                    <path>spike-runtime</path>
+                    <requires64Bit>true</requires64Bit>
+                    <minVersion>21</minVersion>
+                    <opts>
+                      <opt>-XX:SharedArchiveFile=%EXEDIR%\app.jsa</opt>
+                      <opt>-XX:TieredStopAtLevel=1</opt>
+                      <opt>-XX:+UseSerialGC</opt>
+                    </opts>
+                  </jre>
+                  <versionInfo>
+                    <fileVersion>0.1.0.0</fileVersion>
+                    <txtFileVersion>0.1.0-spike</txtFileVersion>
+                    <fileDescription>JavaGuardCLI packaging spike</fileDescription>
+                    <copyright>devmanchego</copyright>
+                    <productVersion>0.1.0.0</productVersion>
+                    <txtProductVersion>0.1.0-spike</txtProductVersion>
+                    <productName>JavaGuardCLI-spike</productName>
+                    <internalName>echospike</internalName>
+                    <originalFilename>echospike.exe</originalFilename>
+                  </versionInfo>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+      mvn -Pdist package          builds target/javaguard-<v>-windows-x64.zip and target/javaguard-<v>-portable.zip
+      mvn -Pdist verify           also runs the packaged-executable tests (src/test, *IT) and writes target/dist/size-report.md
+
+      shade (fat jar, services merged, FindSecBugs kept out) -> Launch4j (console exe, external jar) -> antrun:
+      jdeps + explicit modules -> jlink -> base CDS dump -> AppCDS training run -> assembly of both zips (specification 21).
+    -->
+    <profile>
+      <id>dist</id>
+      <properties>
+        <dist.fatjar>javaguard-${project.version}-all.jar</dist.fatjar>
+        <dist.stage>${project.build.directory}/dist/windows-x64</dist.stage>
+        <dist.portable>${project.build.directory}/dist/portable</dist.portable>
+        <dist.modules.explicit>jdk.compiler,java.compiler,jdk.zipfs,java.net.http,java.xml,java.logging,jdk.unsupported,java.management,java.naming,jdk.crypto.ec,java.sql,java.desktop,jdk.jfr,java.prefs,java.rmi,java.scripting,java.security.jgss,java.instrument</dist.modules.explicit>
+        <dist.jvm.flags>-XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xss1m -Xmx1g</dist.jvm.flags>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.h3xstream.findsecbugs</groupId>
+          <artifactId>findsecbugs-plugin</artifactId>
+          <scope>runtime</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <finalName>javaguard</finalName>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>fat-jar</id>
+                <phase>package</phase>
+                <goals><goal>shade</goal></goals>
+                <configuration>
+                  <outputFile>${project.build.directory}/${dist.fatjar}</outputFile>
+                  <createDependencyReducedPom>false</createDependencyReducedPom>
+                  <artifactSet>
+                    <excludes>
+                      <!-- SpotBugs and FindSecBugs both carry findbugs.xml/messages.xml at their root: merged, the plugin
+                           would vanish. It ships as plugins/findsecbugs-plugin.jar and is loaded as a custom plugin. -->
+                      <exclude>com.h3xstream.findsecbugs:findsecbugs-plugin</exclude>
+                    </excludes>
+                  </artifactSet>
+                  <filters>
+                    <filter>
+                      <artifact>*:*</artifact>
+                      <excludes>
+                        <exclude>META-INF/*.SF</exclude>
+                        <exclude>META-INF/*.DSA</exclude>
+                        <exclude>META-INF/*.RSA</exclude>
+                        <exclude>module-info.class</exclude>
+                        <exclude>META-INF/versions/*/module-info.class</exclude>
+                      </excludes>
+                    </filter>
+                    <filter>
+                      <artifact>com.devmanchego:javaguard-dist</artifact>
+                      <excludes>
+                        <exclude>com/devmanchego/javaguard/dist/spike/**</exclude>
+                      </excludes>
+                    </filter>
+                  </filters>
+                  <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                      <mainClass>com.devmanchego.javaguard.cli.Main</mainClass>
+                      <manifestEntries>
+                        <Multi-Release>true</Multi-Release>
+                      </manifestEntries>
+                    </transformer>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheNoticeResourceTransformer">
+                      <addHeader>false</addHeader>
+                    </transformer>
+                  </transformers>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>com.akathist.maven.plugins.launch4j</groupId>
+            <artifactId>launch4j-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>dist-exe</id>
+                <phase>package</phase>
+                <goals><goal>launch4j</goal></goals>
+                <configuration>
+                  <headerType>console</headerType>
+                  <dontWrapJar>true</dontWrapJar>
+                  <!-- Required by Launch4j; the entry that counts is preCp, absolute from the exe location, because a relative jar
+                       is looked up in the hook caller working directory (the project), not next to the exe. -->
+                  <jar>${dist.fatjar}</jar>
+                  <outfile>${dist.stage}/javaguard.exe</outfile>
+                  <icon>${project.basedir}/src/main/dist/javaguard.ico</icon>
+                  <errTitle>JavaGuardCLI</errTitle>
+                  <classPath>
+                    <mainClass>com.devmanchego.javaguard.cli.Main</mainClass>
+                    <preCp>%EXEDIR%\${dist.fatjar}</preCp>
+                  </classPath>
+                  <jre>
+                    <path>runtime</path>
+                    <requires64Bit>true</requires64Bit>
+                    <minVersion>21</minVersion>
+                    <opts>
+                      <opt>-XX:SharedArchiveFile=%EXEDIR%\app.jsa</opt>
+                      <opt>-XX:TieredStopAtLevel=1</opt>
+                      <opt>-XX:+UseSerialGC</opt>
+                      <opt>-Xss1m</opt>
+                      <opt>-Xmx1g</opt>
+                      <opt>-Dfile.encoding=UTF-8</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</opt>
+                      <opt>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</opt>
+                      <opt>--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</opt>
+                      <opt>--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</opt>
+                    </opts>
+                  </jre>
+                  <versionInfo>
+                    <fileVersion>1.0.0.0</fileVersion>
+                    <txtFileVersion>${project.version}</txtFileVersion>
+                    <fileDescription>JavaGuardCLI</fileDescription>
+                    <copyright>Copyright 2026 Alejandro Alberca Manzaneque. Apache License 2.0</copyright>
+                    <productVersion>1.0.0.0</productVersion>
+                    <txtProductVersion>${project.version}</txtProductVersion>
+                    <companyName>devmanchego</companyName>
+                    <productName>JavaGuardCLI</productName>
+                    <internalName>javaguard</internalName>
+                    <originalFilename>javaguard.exe</originalFilename>
+                  </versionInfo>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>dist-assemble</id>
+                <phase>package</phase>
+                <goals><goal>run</goal></goals>
+                <configuration>
+                  <target>
+                    <property name="java.bin" value="${java.home}/bin"/>
+                    <property name="runtime.dir" value="${dist.stage}/runtime"/>
+                    <property name="fat.jar" value="${project.build.directory}/${dist.fatjar}"/>
+                    <property name="exports" value="--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED"/>
+
+                    <!-- 1. modules: jdeps on the fat jar, unioned with the explicit list of section 21.2 -->
+                    <exec executable="${java.bin}/jdeps" failonerror="true" output="${project.build.directory}/jdeps-modules.txt">
+                      <arg line="--multi-release 21 --print-module-deps --ignore-missing-deps ${fat.jar}"/>
+                    </exec>
+                    <loadfile property="jdeps.modules" srcFile="${project.build.directory}/jdeps-modules.txt">
+                      <filterchain><striplinebreaks/></filterchain>
+                    </loadfile>
+                    <echo message="modules: ${jdeps.modules},${dist.modules.explicit}"/>
+
+                    <!-- 2. jlink runtime -->
+                    <delete dir="${runtime.dir}" quiet="true"/>
+                    <exec executable="${java.bin}/jlink" failonerror="true">
+                      <arg line="--module-path ${java.home}/jmods --add-modules ${jdeps.modules},${dist.modules.explicit} --output ${runtime.dir} --strip-debug --no-man-pages --no-header-files --compress zip-6"/>
+                    </exec>
+                    <exec executable="${runtime.dir}/bin/java" failonerror="false">
+                      <arg line="-Xshare:dump"/>
+                    </exec>
+
+                    <!-- 3. the package layout, then the AppCDS training run from inside it -->
+                    <copy file="${fat.jar}" todir="${dist.stage}"/>
+                    <mkdir dir="${dist.stage}/plugins"/>
+                    <copy file="${settings.localRepository}/com/h3xstream/findsecbugs/findsecbugs-plugin/${findsecbugs.version}/findsecbugs-plugin-${findsecbugs.version}.jar" tofile="${dist.stage}/plugins/findsecbugs-plugin.jar"/>
+                    <delete dir="${project.build.directory}/dist/training" quiet="true"/>
+                    <copy todir="${project.build.directory}/dist/training/project">
+                      <fileset dir="${project.basedir}/../javaguard-core/src/test/resources/fixtures/maven-simple"/>
+                    </copy>
+                    <delete file="${dist.stage}/app.jsa" quiet="true"/>
+                    <exec executable="${runtime.dir}/bin/java" failonerror="true" dir="${project.build.directory}/dist/training">
+                      <arg line="-XX:ArchiveClassesAtExit=${dist.stage}/app.jsa ${dist.jvm.flags} -Dfile.encoding=UTF-8 ${exports} -cp ${dist.stage}/${dist.fatjar} com.devmanchego.javaguard.dist.training.TrainingRun ${project.build.directory}/dist/training/project"/>
+                    </exec>
+
+                    <!-- 4. documents and the two zips -->
+                    <copy file="${project.basedir}/../README.md" todir="${dist.stage}"/>
+                    <copy todir="${dist.stage}">
+                      <fileset dir="${project.basedir}/src/main/dist" includes="USAGE.md,THIRD-PARTY.txt"/>
+                      <fileset dir="${project.basedir}/.." includes="LICENSE,NOTICE"/>
+                    </copy>
+                    <delete file="${project.build.directory}/javaguard-${project.version}-windows-x64.zip" quiet="true"/>
+                    <zip destfile="${project.build.directory}/javaguard-${project.version}-windows-x64.zip" level="9">
+                      <zipfileset dir="${dist.stage}" prefix="javaguard-${project.version}"/>
+                    </zip>
+
+                    <delete dir="${dist.portable}" quiet="true"/>
+                    <mkdir dir="${dist.portable}/plugins"/>
+                    <copy file="${fat.jar}" todir="${dist.portable}"/>
+                    <copy file="${dist.stage}/plugins/findsecbugs-plugin.jar" todir="${dist.portable}/plugins"/>
+                    <copy todir="${dist.portable}">
+                      <fileset dir="${dist.stage}" includes="README.md,USAGE.md,LICENSE,NOTICE,THIRD-PARTY.txt"/>
+                      <fileset dir="${project.basedir}/src/main/dist" includes="javaguard.cmd,javaguard"/>
+                    </copy>
+                    <delete file="${project.build.directory}/javaguard-${project.version}-portable.zip" quiet="true"/>
+                    <zip destfile="${project.build.directory}/javaguard-${project.version}-portable.zip" level="9">
+                      <zipfileset dir="${dist.portable}" prefix="javaguard-${project.version}" excludes="javaguard"/>
+                      <zipfileset dir="${dist.portable}" prefix="javaguard-${project.version}" includes="javaguard" filemode="755"/>
+                    </zip>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <!-- The reference runs happen in this JVM: it needs the flags the packaged launcher bakes in. -->
+              <argLine>-Dfile.encoding=UTF-8 -Djavaguard.notifications=off --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</argLine>
+              <systemPropertyVariables>
+                <dist.stage>${dist.stage}</dist.stage>
+                <dist.portable>${dist.portable}</dist.portable>
+                <dist.target>${project.build.directory}</dist.target>
+                <dist.version>${project.version}</dist.version>
+                <fixtures.dir>${project.basedir}/../javaguard-core/src/test/resources/fixtures</fixtures.dir>
+              </systemPropertyVariables>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

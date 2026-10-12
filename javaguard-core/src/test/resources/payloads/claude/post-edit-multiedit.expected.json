@@ -1,0 +1,21 @@
+{
+  "agent": "CLAUDE",
+  "gate": "POST_EDIT",
+  "sessionId": "3f2c9a1e-claude-session",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "MultiEdit",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/main/java/com/acme/OrderService.java",
+      "type": "UPDATE",
+      "movedFrom": null,
+      "fragments": [
+        { "oldText": "import java.util.List;", "newText": "import java.util.List;\nimport java.util.Map;", "replaceAll": false },
+        { "oldText": "legacyTotal", "newText": "total", "replaceAll": true }
+      ]
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

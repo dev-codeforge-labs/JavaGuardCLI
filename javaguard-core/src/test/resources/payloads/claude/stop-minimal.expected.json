@@ -1,0 +1,11 @@
+{
+  "agent": "CLAUDE",
+  "gate": "END_OF_TURN",
+  "sessionId": "unknown",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "",
+  "changes": [],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

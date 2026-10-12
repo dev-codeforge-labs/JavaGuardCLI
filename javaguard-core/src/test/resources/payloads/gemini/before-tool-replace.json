@@ -1,0 +1,12 @@
+{
+  "session_id": "gemini-7c1d",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "BeforeTool",
+  "timestamp": "2026-09-28T09:14:59.000Z",
+  "tool_name": "replace",
+  "tool_input": {
+    "file_path": "${PROJECT}${SEP}src${SEP}main${SEP}java${SEP}com${SEP}acme${SEP}UserDao.java",
+    "old_string": "x",
+    "new_string": "y"
+  }
+}

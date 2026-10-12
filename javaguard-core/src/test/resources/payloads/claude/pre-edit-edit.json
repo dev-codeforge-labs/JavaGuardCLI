@@ -1,0 +1,13 @@
+{
+  "session_id": "3f2c9a1e-claude-session",
+  "cwd": "${PROJECT}",
+  "permission_mode": "acceptEdits",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": "${PROJECT}${SEP}src${SEP}test${SEP}java${SEP}com${SEP}acme${SEP}UserDaoTest.java",
+    "old_string": "assertEquals(3, rows);",
+    "new_string": "assertEquals(4, rows);"
+  },
+  "tool_use_id": "toolu_07"
+}

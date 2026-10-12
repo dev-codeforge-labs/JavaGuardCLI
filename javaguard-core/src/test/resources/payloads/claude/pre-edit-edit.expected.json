@@ -1,0 +1,18 @@
+{
+  "agent": "CLAUDE",
+  "gate": "PRE_EDIT",
+  "sessionId": "3f2c9a1e-claude-session",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "Edit",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/test/java/com/acme/UserDaoTest.java",
+      "type": "UPDATE",
+      "movedFrom": null,
+      "fragments": [ { "oldText": "assertEquals(3, rows);", "newText": "assertEquals(4, rows);", "replaceAll": false } ]
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

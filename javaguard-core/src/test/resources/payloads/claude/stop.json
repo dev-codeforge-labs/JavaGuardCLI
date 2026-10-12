@@ -1,0 +1,10 @@
+{
+  "session_id": "3f2c9a1e-claude-session",
+  "transcript_path": "${PROJECT}${SEP}.claude${SEP}transcript.jsonl",
+  "cwd": "${PROJECT}",
+  "permission_mode": "default",
+  "hook_event_name": "Stop",
+  "stop_hook_active": true,
+  "last_assistant_message": "I fixed the query and the tests pass.",
+  "stop_reason": "end_turn"
+}

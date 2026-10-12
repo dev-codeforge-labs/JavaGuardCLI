@@ -1,0 +1,18 @@
+[ERROR] Failed to execute goal on project module-b: Could not resolve dependencies for project com.acme:module-b:jar:1.0.0
+[ERROR] dependency: org.nonexistent.hallucinated:magic-utils:jar:9.9.9 (compile)
+[ERROR] 	prefixes: Path org/nonexistent/hallucinated/magic-utils/9.9.9/magic-utils-9.9.9.jar NOT allowed from central: The following artifacts could not be resolved: org.nonexistent.hallucinated:magic-utils:jar:9.9.9 (absent): prefixes: Path org/nonexistent/hallucinated/magic-utils/9.9.9/magic-utils-9.9.9.jar NOT allowed from central
+[ERROR] This error indicates that a remote repository filter has rejected this artifact. This commonly happens with repository managers using virtual/group repositories that do not properly aggregate prefix files.
+[ERROR] To disable remote repository filtering, add one or both of these to your command line or to .mvn/maven.config:
+[ERROR]   -Daether.remoteRepositoryFilter.prefixes=false
+[ERROR]   -Daether.remoteRepositoryFilter.groupId=false
+[ERROR] See https://maven.apache.org/resolver/remote-repository-filtering.html
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the '-e' switch
+[ERROR] Re-run Maven using the '-X' switch to enable verbose output
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/DependencyResolutionException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn [args] -r

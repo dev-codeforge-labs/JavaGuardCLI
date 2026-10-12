@@ -1,0 +1,11 @@
+{
+  "agent": "CODEX",
+  "gate": "POST_EDIT",
+  "sessionId": "captured-session",
+  "cwd": "${PROJECT}",
+  "transcriptPath": "${PROJECT}/.codex/rollout.jsonl",
+  "toolName": "Bash",
+  "changes": [],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

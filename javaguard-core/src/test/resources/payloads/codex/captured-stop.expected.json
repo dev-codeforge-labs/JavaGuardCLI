@@ -1,0 +1,11 @@
+{
+  "agent": "CODEX",
+  "gate": "END_OF_TURN",
+  "sessionId": "captured-session",
+  "cwd": "${PROJECT}",
+  "transcriptPath": "${PROJECT}/.codex/rollout.jsonl",
+  "toolName": "",
+  "changes": [],
+  "stopHookActive": false,
+  "lastAssistantMessage": "Renamed the class to `Bye` in `Hello.java`."
+}

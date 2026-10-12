@@ -1,0 +1,16 @@
+{
+  "session_id": "3f2c9a1e-claude-session",
+  "transcript_path": "${PROJECT}${SEP}.claude${SEP}transcript.jsonl",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "${PROJECT}${SEP}src${SEP}main${SEP}java${SEP}com${SEP}acme${SEP}NewService.java",
+    "content": "package com.acme;\n\npublic class NewService {\n}\n"
+  },
+  "tool_response": {
+    "type": "create",
+    "filePath": "${PROJECT}${SEP}src${SEP}main${SEP}java${SEP}com${SEP}acme${SEP}NewService.java"
+  },
+  "tool_use_id": "toolu_02"
+}

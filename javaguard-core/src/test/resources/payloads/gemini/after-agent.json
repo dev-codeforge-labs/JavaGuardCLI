@@ -1,0 +1,10 @@
+{
+  "session_id": "gemini-7c1d",
+  "transcript_path": "${PROJECT}${SEP}.gemini${SEP}chat.json",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "AfterAgent",
+  "timestamp": "2026-09-28T09:20:00.000Z",
+  "prompt": "Fix the SQL injection in UserDao",
+  "prompt_response": "Done: UserDao now uses a PreparedStatement.",
+  "stop_hook_active": false
+}

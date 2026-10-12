@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.devmanchego</groupId>
+    <artifactId>javaguard-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>javaguard-core</artifactId>
+  <packaging>jar</packaging>
+
+  <name>JavaGuardCLI :: core</name>
+  <description>
+    Agent-agnostic logic: domain model, adapters, checks, gates, loop
+    detection, handoff, state. No CLI concerns.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+    <!-- Changed line ranges, baseline vs. current (specification section 9.2). -->
+    <dependency>
+      <groupId>io.github.java-diff-utils</groupId>
+      <artifactId>java-diff-utils</artifactId>
+    </dependency>
+    <!-- Element suppressions (section 11.3) now; AST rules from Phase 5. -->
+    <dependency>
+      <groupId>com.github.javaparser</groupId>
+      <artifactId>javaparser-core</artifactId>
+    </dependency>
+    <!-- In-process PMD 7 with the curated ruleset (catalog section 3, plan Phase 5). -->
+    <dependency>
+      <groupId>net.sourceforge.pmd</groupId>
+      <artifactId>pmd-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.h3xstream.findsecbugs</groupId>
+      <artifactId>findsecbugs-plugin</artifactId>
+    </dependency>
+    <!-- In-process compilation with Error Prone (specification section 8.2, plan Phase 6). -->
+    <dependency>
+      <groupId>com.google.errorprone</groupId>
+      <artifactId>error_prone_core</artifactId>
+    </dependency>
+    <!-- Test-only: validates the SARIF writer's output against the real SARIF
+         2.1.0 JSON schema (specification section 23, plan Phase 3). Version
+         checked against Maven Central on 2026-09-28. -->
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>1.5.6</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Real Flyway and Liquibase on H2: the oracle that JG-DB-001..003 are checked against (plan Phase 23). -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <version>${flyway.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.liquibase</groupId>
+      <artifactId>liquibase-core</artifactId>
+      <version>${liquibase.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>${h2.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <testResources>
+      <!-- Maven/Gradle-fixture integration tests (Phase 2, Phase 6) run real
+           builds against src/test/resources/fixtures, which leaves target/
+           build output inside those fixture directories. Without this
+           exclude, the default test-resources copy would sweep those
+           compiled .class files into this module's own target/test-classes,
+           where surefire's classpath scanner then trips over them as
+           malformed test classes (wrong package-derived location). -->
+      <testResource>
+        <directory>src/test/resources</directory>
+        <excludes>
+          <exclude>fixtures/**/target/**</exclude>
+        </excludes>
+      </testResource>
+    </testResources>
+  </build>
+</project>

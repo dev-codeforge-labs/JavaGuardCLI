@@ -1,0 +1,9 @@
+{
+  "session_id": "3f2c9a1e-claude-session",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Bash",
+  "tool_input": { "command": "mvn -q test" },
+  "tool_response": { "stdout": "", "stderr": "", "interrupted": false },
+  "tool_use_id": "toolu_06"
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0">
+  <persistence-unit name="oracle" transaction-type="RESOURCE_LOCAL">
+    <class>oracle.domain.BaseEntity</class>
+    <class>oracle.domain.Customer</class>
+    <class>oracle.domain.PurchaseOrder</class>
+    <class>oracle.domain.Product</class>
+    <class>oracle.domain.Address</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+      <property name="jakarta.persistence.jdbc.url" value="jdbc:h2:mem:oracle;DB_CLOSE_DELAY=-1"/>
+      <property name="jakarta.persistence.jdbc.user" value="sa"/>
+      <property name="jakarta.persistence.jdbc.password" value=""/>
+      <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create"/>
+    </properties>
+  </persistence-unit>
+</persistence>

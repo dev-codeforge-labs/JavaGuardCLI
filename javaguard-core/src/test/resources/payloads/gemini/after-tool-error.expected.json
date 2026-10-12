@@ -1,0 +1,11 @@
+{
+  "agent": "GEMINI",
+  "gate": "POST_EDIT",
+  "sessionId": "gemini-7c1d",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "replace",
+  "changes": [],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

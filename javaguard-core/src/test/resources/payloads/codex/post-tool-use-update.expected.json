@@ -1,0 +1,29 @@
+{
+  "agent": "CODEX",
+  "gate": "POST_EDIT",
+  "sessionId": "codex-019a",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "apply_patch",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/main/java/com/acme/UserDao.java",
+      "type": "UPDATE",
+      "movedFrom": null,
+      "fragments": [
+        {
+          "oldText": "  List<User> find(String name) {\n    String sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";\n    return jdbc.query(sql, mapper);\n  }",
+          "newText": "  List<User> find(String name) {\n    return jdbc.query(\"SELECT * FROM users WHERE name = ?\", mapper, name);\n  }",
+          "replaceAll": false
+        },
+        {
+          "oldText": "  void delete(long id) {\n    jdbc.update(\"DELETE FROM users WHERE id = \" + id);\n  }",
+          "newText": "  void delete(long id) {\n    jdbc.update(\"DELETE FROM users WHERE id = ?\", id);\n  }",
+          "replaceAll": false
+        }
+      ]
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

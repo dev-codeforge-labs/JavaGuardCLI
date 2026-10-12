@@ -1,0 +1,10 @@
+{
+  "session_id": "captured-session",
+  "transcript_path": "${PROJECT}${SEP}.codex${SEP}rollout.jsonl",
+  "cwd": "${PROJECT}",
+  "turn_id": "captured-turn",
+  "hook_event_name": "UserPromptSubmit",
+  "model": "gpt-6-luna",
+  "permission_mode": "default",
+  "prompt": "Create src/main/java/Hello.java with an empty class"
+}

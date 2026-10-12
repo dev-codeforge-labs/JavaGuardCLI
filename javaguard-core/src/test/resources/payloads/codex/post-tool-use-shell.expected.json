@@ -1,0 +1,11 @@
+{
+  "agent": "CODEX",
+  "gate": "POST_EDIT",
+  "sessionId": "codex-019a",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "Bash",
+  "changes": [],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

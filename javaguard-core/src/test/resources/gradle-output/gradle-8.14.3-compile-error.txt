@@ -1,0 +1,24 @@
+@ROOT@\src\main\java\com\acme\simple\App.java:5: error: cannot find symbol
+        return undefinedVariable;
+               ^
+  symbol:   variable undefinedVariable
+  location: class App
+1 error
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  @ROOT@\src\main\java\com\acme\simple\App.java:5: error: cannot find symbol
+          return undefinedVariable;
+                 ^
+    symbol:   variable undefinedVariable
+    location: class App
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1s

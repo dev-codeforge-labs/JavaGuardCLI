@@ -1,0 +1,11 @@
+{
+  "session_id": "codex-019a",
+  "transcript_path": "${PROJECT}${SEP}.codex${SEP}rollout.jsonl",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "Stop",
+  "model": "gpt-5.5-codex",
+  "permission_mode": "workspace-write",
+  "turn_id": "turn-44",
+  "stop_hook_active": true,
+  "last_assistant_message": null
+}

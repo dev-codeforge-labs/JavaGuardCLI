@@ -1,0 +1,23 @@
+#!/bin/sh
+# JavaGuardCLI portable launcher (needs Java 21 or newer). Hooks need stdin, stdout and the exit code to pass through unchanged.
+HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+JAR=$(ls "$HERE"/javaguard-*-all.jar 2>/dev/null | head -n 1)
+if [ -z "$JAR" ]; then
+  echo "javaguard: no javaguard-*-all.jar next to $0" >&2
+  exit 4
+fi
+if [ -n "$JAVA_HOME" ]; then JAVA="$JAVA_HOME/bin/java"; else JAVA=java; fi
+# Under the POSIX locale (containers, cron, some CI) the JVM cannot handle a path with non-ASCII characters at all. Use a UTF-8
+# locale for this process when the system has one; elsewhere (macOS) the JVM already uses UTF-8 for file names.
+case "${LC_ALL:-${LC_CTYPE:-$LANG}}" in
+  *[Uu][Tt][Ff]-8*|*[Uu][Tt][Ff]8*) ;;
+  *) if locale -a 2>/dev/null | grep -qi '^c\.utf-\{0,1\}8$'; then LC_ALL=C.UTF-8; export LC_ALL; fi ;;
+esac
+exec "$JAVA" -XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xss1m -Xmx1g \
+  --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED \
+  --add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+  --add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED \
+  --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED \
+  --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED \
+  --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED \
+  -jar "$JAR" "$@"

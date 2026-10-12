@@ -1,0 +1,18 @@
+{
+  "agent": "GEMINI",
+  "gate": "POST_EDIT",
+  "sessionId": "gemini-7c1d",
+  "cwd": "${PROJECT}",
+  "transcriptPath": null,
+  "toolName": "replace",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/main/java/com/acme/UserDao.java",
+      "type": "UPDATE",
+      "movedFrom": null,
+      "fragments": [ { "oldText": "a", "newText": "b", "replaceAll": false } ]
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

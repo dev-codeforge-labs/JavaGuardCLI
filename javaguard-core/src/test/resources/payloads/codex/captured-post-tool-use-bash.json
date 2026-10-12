@@ -1,0 +1,15 @@
+{
+  "session_id": "captured-session",
+  "transcript_path": "${PROJECT}${SEP}.codex${SEP}rollout.jsonl",
+  "cwd": "${PROJECT}",
+  "turn_id": "captured-turn",
+  "hook_event_name": "PostToolUse",
+  "model": "gpt-6-luna",
+  "permission_mode": "default",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "Set-Content -Path src/main/java/Hello.java -Value \"public class Bye {`n}\"; mvn -q compile"
+  },
+  "tool_response": "[ERROR] COMPILATION ERROR : \r\n[ERROR] class Bye is public, should be declared in a file named Bye.java\r\n",
+  "tool_use_id": "exec-captured"
+}

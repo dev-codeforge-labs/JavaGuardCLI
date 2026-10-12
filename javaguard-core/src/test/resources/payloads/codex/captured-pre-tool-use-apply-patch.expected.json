@@ -1,0 +1,18 @@
+{
+  "agent": "CODEX",
+  "gate": "PRE_EDIT",
+  "sessionId": "captured-session",
+  "cwd": "${PROJECT}",
+  "transcriptPath": "${PROJECT}/.codex/rollout.jsonl",
+  "toolName": "apply_patch",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/main/java/Bye.java",
+      "type": "ADD",
+      "movedFrom": null,
+      "fragments": []
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

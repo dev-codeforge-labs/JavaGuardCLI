@@ -1,0 +1,11 @@
+{
+  "session_id": "captured-session",
+  "transcript_path": "${PROJECT}${SEP}.codex${SEP}rollout.jsonl",
+  "cwd": "${PROJECT}",
+  "turn_id": "captured-turn",
+  "hook_event_name": "Stop",
+  "model": "gpt-6-luna",
+  "permission_mode": "default",
+  "stop_hook_active": false,
+  "last_assistant_message": "Renamed the class to `Bye` in `Hello.java`."
+}

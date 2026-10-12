@@ -1,0 +1,20 @@
+{
+  "agent": "GEMINI",
+  "gate": "POST_EDIT",
+  "sessionId": "gemini-7c1d",
+  "cwd": "${PROJECT}",
+  "transcriptPath": "${PROJECT}/.gemini/chat.json",
+  "toolName": "replace",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/main/java/com/acme/UserDao.java",
+      "type": "UPDATE",
+      "movedFrom": null,
+      "fragments": [
+        { "oldText": "Statement st = conn.createStatement();", "newText": "PreparedStatement st = conn.prepareStatement(SQL);", "replaceAll": false }
+      ]
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

@@ -1,0 +1,20 @@
+{
+  "session_id": "3f2c9a1e-claude-session",
+  "transcript_path": "${PROJECT}${SEP}.claude${SEP}transcript.jsonl",
+  "cwd": "${PROJECT}",
+  "permission_mode": "default",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": "${PROJECT}${SEP}src${SEP}main${SEP}java${SEP}com${SEP}acme${SEP}UserDao.java",
+    "old_string": "return jdbc.query(sql);",
+    "new_string": "return jdbc.query(sql, mapper);",
+    "replace_all": false
+  },
+  "tool_response": {
+    "filePath": "${PROJECT}${SEP}src${SEP}main${SEP}java${SEP}com${SEP}acme${SEP}UserDao.java",
+    "success": true
+  },
+  "tool_use_id": "toolu_01ABCDEF",
+  "tool_call_duration_ms": 12
+}

@@ -1,0 +1,20 @@
+JavaGuardCLI itself is Copyright 2026 Alejandro Alberca Manzaneque, licensed under the Apache License 2.0 (LICENSE, NOTICE).
+
+Third-party components bundled in JavaGuardCLI (javaguard-*-all.jar and plugins/), with their licenses.
+Versions are pinned in the parent pom.xml of the source tree.
+
+Error Prone (core)            Apache License 2.0
+PMD (pmd-java and deps)       BSD-style
+JavaParser                    Apache License 2.0 / LGPL 3 (dual)
+SpotBugs                      LGPL 2.1
+FindSecBugs plugin            LGPL 3 (plugins/findsecbugs-plugin.jar, unmodified)
+Jackson                       Apache License 2.0
+picocli                       Apache License 2.0
+ASM, BCEL, dom4j              BSD-style / Apache License 2.0
+java-diff-utils               Apache License 2.0
+SLF4J                         MIT
+Guava and other Error Prone deps   Apache License 2.0
+
+The jlink runtime in runtime/ is OpenJDK (GPL 2 with the Classpath Exception).
+
+This list is maintained by hand; the dependency tree of the build is authoritative.

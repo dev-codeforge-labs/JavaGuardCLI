@@ -1,0 +1,12 @@
+{
+  "session_id": "3f2c9a1e-claude-session",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Edit",
+  "tool_input": {
+    "file_path": "src/main/java/com/acme/../acme/UserDao.java",
+    "old_string": "a",
+    "new_string": "b"
+  },
+  "tool_use_id": "toolu_05"
+}

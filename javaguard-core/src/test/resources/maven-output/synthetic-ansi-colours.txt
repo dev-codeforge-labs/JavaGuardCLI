@@ -1,0 +1,9 @@
+[[1;31mERROR[m] COMPILATION ERROR :
+[[1;31mERROR[m] /home/dev/proj/src/main/java/com/acme/App.java:[7,25] cannot find symbol
+  symbol:   method value()
+  location: class com.acme.modulea.Foo
+[[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-compiler-plugin:3.14.0:compile[m [1m(default-compile)[m on project [36mproj[m: [1;31mCompilation failure[m
+[[1;31mERROR[m] /home/dev/proj/src/main/java/com/acme/App.java:[7,25] cannot find symbol
+[[1;31mERROR[m]   symbol:   method value()
+[[1;31mERROR[m]   location: class com.acme.modulea.Foo
+[[1;31mERROR[m] -> [1m[Help 1][m

@@ -1,0 +1,87 @@
+# JG-SPR-015/016 cases (plan Phase 22), checked against the real Spring Data JPA 3.3.4 + Hibernate 6.5 by
+# SpringDataOracleIntegrationTest (fixture spring-data-oracle) and against JavaGuard by SpringDataCasesTest.
+#
+# D|<entity>|<repository method declaration>|<oracle verdict>|<JavaGuard verdict>
+# Q|<JPQL in @Query>|<oracle verdict>|<JavaGuard verdict>
+#
+# Oracle verdict: VALID (the repository is created) or INVALID (creating it fails, as an application start-up would).
+# JavaGuard verdict: FINDING or NONE. JavaGuard may miss an invalid query (INVALID|NONE), never the reverse.
+#
+# Domain (fixture): @MappedSuperclass BaseEntity {id, createdAt}; @Embeddable Address {street, city, zipCode};
+# @Entity Customer extends BaseEntity {firstName, lastName, email, active, age, URL, birthDate, status, address, orders,
+# @Transient display}; @Entity(name = "Purchase") PurchaseOrder extends BaseEntity {customer, total, number};
+# @Entity Product {@Id sku, name, loggedIn}.
+
+D|Customer|List<Customer> findByFirstName(String a)|VALID|NONE
+D|Customer|List<Customer> findByFirstname(String a)|INVALID|FINDING
+D|Customer|Optional<Customer> findByEmailAddress(String a)|INVALID|FINDING
+D|Customer|List<Customer> findByAddressZipCode(String a)|VALID|NONE
+D|Customer|List<Customer> findByAddress_ZipCode(String a)|VALID|NONE
+D|Customer|List<Customer> findByAddressZip(String a)|INVALID|FINDING
+D|Customer|List<Customer> findByAgeBetween(int a)|INVALID|FINDING
+D|Customer|List<Customer> findByAgeBetween(int a, int b)|VALID|NONE
+D|Customer|List<Customer> findByDisplay(String a)|INVALID|FINDING
+D|Customer|List<Customer> findTop10ByOrderByLastNameAsc()|VALID|NONE
+D|Customer|List<Customer> findByURL(String a)|VALID|NONE
+D|Customer|List<Customer> findByUrl(String a)|INVALID|FINDING
+D|Customer|List<Customer> findByCreatedAtAfter(Instant a)|VALID|NONE
+D|Customer|List<Customer> findByIdIn(List<Long> a)|VALID|NONE
+D|Customer|List<Customer> findByOrdersNumber(String a)|VALID|NONE
+D|Customer|List<Customer> findByOrdersAmount(BigDecimal a)|INVALID|FINDING
+D|Customer|List<Customer> findByLastNameAndFirstName(String a)|INVALID|FINDING
+D|Customer|List<Customer> findByLastName(String a, Pageable p)|VALID|NONE
+D|Customer|List<Customer> findByLastName(String a, Sort s)|VALID|NONE
+D|Customer|List<Customer> findByEmailIsNull()|VALID|NONE
+D|Customer|List<Customer> findByActiveTrue()|VALID|NONE
+D|Customer|long countByStatus(Status a)|VALID|NONE
+D|Customer|boolean existsByEmail(String a)|VALID|NONE
+D|Customer|void deleteByEmail(String a)|VALID|NONE
+D|Customer|List<Customer> findByFirstNameIgnoreCaseContaining(String a)|VALID|NONE
+D|Customer|List<Customer> findByLastNameAndFirstNameAllIgnoreCase(String a, String b)|VALID|NONE
+D|Customer|List<Customer> findByLastNameAllIgnoreCaseOrderByFirstNameAsc(String a)|VALID|NONE
+D|Customer|List<Customer> findByStatusIn(Collection<Status> a)|VALID|NONE
+D|Customer|List<Customer> findByBirthDateBefore(LocalDate a)|VALID|NONE
+D|Customer|List<Customer> findByLastNameOrderByCreatedDesc(String a)|INVALID|FINDING
+D|Customer|List<Customer> findDistinctByAddressCity(String a)|VALID|NONE
+D|Customer|List<Customer> findByAddressCityAndOrdersTotalGreaterThan(String a, BigDecimal b)|VALID|NONE
+D|Customer|List<Customer> findFirst3ByActiveOrderByCreatedAtDesc(boolean a)|VALID|NONE
+D|Customer|List<Customer> findByAgeGreaterThanEqualAndEmailNotNull(int a)|VALID|NONE
+D|Customer|List<Customer> findByEmailStartingWithOrLastNameEndingWith(String a, String b)|VALID|NONE
+D|Customer|List<Customer> findByAddressStreetLike(String a)|VALID|NONE
+D|PurchaseOrder|List<PurchaseOrder> findByCustomerLastName(String a)|VALID|NONE
+D|PurchaseOrder|List<PurchaseOrder> findByCustomer_Address_City(String a)|VALID|NONE
+D|PurchaseOrder|List<PurchaseOrder> findByCustomerNickname(String a)|INVALID|FINDING
+D|PurchaseOrder|List<PurchaseOrder> findByTotalGreaterThanOrderByNumberAsc(BigDecimal a)|VALID|NONE
+D|PurchaseOrder|List<PurchaseOrder> findByAmount(BigDecimal a)|INVALID|FINDING
+D|Product|List<Product> findByLoggedIn(boolean a)|INVALID|FINDING
+D|Product|List<Product> findByNameStartingWith(String a)|VALID|NONE
+D|Product|List<Product> findBySkuIn(List<String> a)|VALID|NONE
+
+Q|select c from Customer c where c.email = 'x'|VALID|NONE
+Q|select c from Customer c where c.emailAddress = 'x'|INVALID|FINDING
+Q|select p from PurchaseOrder p|INVALID|FINDING
+Q|select p from Purchase p where p.total > 0|VALID|NONE
+Q|select c from Custmer c|INVALID|FINDING
+Q|select c from Customer c join c.orders o where o.amount > 0|INVALID|FINDING
+Q|select c from Customer c join c.orders o where o.number = 'x'|VALID|NONE
+Q|select c from Customer c where c.createdAt is not null|VALID|NONE
+Q|select c from Customer c where c.display = 'x'|INVALID|FINDING
+Q|select c from Customer c where c.firstName like 'c.unknown%'|VALID|NONE
+Q|SELECT C FROM Customer C WHERE C.lastName = 'x'|VALID|NONE
+Q|from Customer where active = true|VALID|NONE
+Q|select c from Customer c where c.address.zipCode = 'x'|VALID|NONE
+Q|select c from Customer c where c.address.zip = 'x'|INVALID|FINDING
+Q|select count(c) from Customer c where extract(year from c.createdAt) = 2020|VALID|NONE
+Q|select c from Customer c, Purchase p where p.customer = c|VALID|NONE
+Q|select c from Customer c where c.orders.number = 'x'|INVALID|NONE
+Q|select p from Product p where p.sku = 'x'|VALID|NONE
+Q|select c from Customer c where c.id = 1|VALID|NONE
+Q|select c from Customer c where c.URL = 'x'|VALID|NONE
+Q|select c from Customer c order by c.lastname|INVALID|FINDING
+Q|select o from Purchase o join fetch o.customer where o.customer.age > 18|VALID|NONE
+Q|select c.address.city, count(c) from Customer c group by c.address.city|VALID|NONE
+Q|select new map(c.firstName as name) from Customer c|VALID|NONE
+Q|update Customer c set c.active = false where c.age > 99|VALID|NONE
+Q|update Customer c set c.enabled = false|INVALID|FINDING
+Q|delete from Purchase p where p.number is null|VALID|NONE
+Q|select i from Invoice i|INVALID|NONE

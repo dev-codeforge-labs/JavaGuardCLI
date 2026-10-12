@@ -1,0 +1,97 @@
+# JavaGuardCLI built-in defaults (specification section 18.2).
+# This file is the single source of truth for default values and for the set
+# of valid keys: any key not present here is reported as unknown, except
+# inside the free-form maps "rules" and "consult.commands".
+
+exclude: ["**/generated/**", "**/target/**", "**/build/**"]
+
+build:
+  tool: auto                 # auto | maven | gradle
+  maven:
+    useDaemon: true          # prefer mvnd when on PATH
+    offlineFirst: true
+    extraArgs: []
+  gradle:
+    extraArgs: []
+
+fastGate:
+  enabled: true
+  budgetMillis: 3000
+  compileErrors: advise      # advise | block
+  inProcessCompile: true
+
+fullGate:
+  enabled: true
+  budgetSeconds: 540
+  maxConsecutiveBlocks: 3
+
+tests:
+  scope: affected            # affected | module | all | none
+  maxClasses: 50
+  includeIntegration: false
+  unrelatedFailures: advise  # advise | block
+
+errorprone:
+  enabled: true
+pmd:
+  enabled: true
+spotbugs:
+  enabled: true
+
+# Per-rule overrides: { <ruleId>: { enabled, severity, exclude, <rule option>... } }
+rules: {}
+
+suppressions:
+  allowAgentAdded: true
+
+deps:
+  osv:
+    enabled: true
+    timeoutSeconds: 5
+
+api:
+  publicPackages: []         # e.g. ["com.acme.api.**"]
+
+arch:
+  rules: []                  # [{ from: "com.acme.domain..", mustNotDependOn: ["com.acme.web.."] }]
+
+report:
+  maxFindings: 15
+  maxChars: 6000
+  ascii: true
+  adviseOnPostEdit: true
+  sarif: false
+
+loop:
+  repeatThreshold: 3
+  oscillationWindow: 6
+  noProgressWindow: 5
+  maxBlockedRuns: 12
+  maxSnapshots: 20
+
+handoff:
+  copyToProjectRoot: true
+  maxFileLines: 400
+  maxDiffLines: 300
+  transcriptMessages: 6
+  redactPatterns: []
+
+consult:
+  enabled: false
+  order: [gemini, codex, claude]
+  timeoutSeconds: 300
+  claude:
+    model: "claude-opus-5-5"
+  commands: {}               # per-agent command template overrides
+
+notify:
+  terminalBell: true
+  sound: true
+  toast: true
+  consultation: false        # also notify when a second-model consultation starts and ends
+  ntfy:
+    enabled: false
+    url: ""
+
+state:
+  retentionDays: 7

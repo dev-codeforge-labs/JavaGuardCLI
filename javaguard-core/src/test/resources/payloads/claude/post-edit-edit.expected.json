@@ -1,0 +1,20 @@
+{
+  "agent": "CLAUDE",
+  "gate": "POST_EDIT",
+  "sessionId": "3f2c9a1e-claude-session",
+  "cwd": "${PROJECT}",
+  "transcriptPath": "${PROJECT}/.claude/transcript.jsonl",
+  "toolName": "Edit",
+  "changes": [
+    {
+      "path": "${PROJECT}/src/main/java/com/acme/UserDao.java",
+      "type": "UPDATE",
+      "movedFrom": null,
+      "fragments": [
+        { "oldText": "return jdbc.query(sql);", "newText": "return jdbc.query(sql, mapper);", "replaceAll": false }
+      ]
+    }
+  ],
+  "stopHookActive": false,
+  "lastAssistantMessage": null
+}

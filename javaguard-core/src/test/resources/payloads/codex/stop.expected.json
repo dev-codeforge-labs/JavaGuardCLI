@@ -1,0 +1,11 @@
+{
+  "agent": "CODEX",
+  "gate": "END_OF_TURN",
+  "sessionId": "codex-019a",
+  "cwd": "${PROJECT}",
+  "transcriptPath": "${PROJECT}/.codex/rollout.jsonl",
+  "toolName": "",
+  "changes": [],
+  "stopHookActive": true,
+  "lastAssistantMessage": null
+}

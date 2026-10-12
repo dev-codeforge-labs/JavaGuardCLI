@@ -1,0 +1,14 @@
+{
+  "session_id": "captured-session",
+  "turn_id": "captured-turn",
+  "transcript_path": "${PROJECT}${SEP}.codex${SEP}rollout.jsonl",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "PreToolUse",
+  "model": "gpt-6-luna",
+  "permission_mode": "default",
+  "tool_name": "apply_patch",
+  "tool_input": {
+    "command": "*** Begin Patch\n*** Add File: src/main/java/Bye.java\n+public class Bye {\n+}\n*** End Patch"
+  },
+  "tool_use_id": "exec-captured"
+}

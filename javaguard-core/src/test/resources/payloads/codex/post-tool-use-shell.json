@@ -1,0 +1,10 @@
+{
+  "session_id": "codex-019a",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "PostToolUse",
+  "model": "gpt-5.5-codex",
+  "turn_id": "turn-45",
+  "tool_name": "Bash",
+  "tool_input": { "command": "sed -i 's/foo/bar/' src/main/java/com/acme/Foo.java" },
+  "tool_response": { "exit_code": 0, "output": "" }
+}

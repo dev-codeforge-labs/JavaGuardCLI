@@ -1,0 +1,17 @@
+{
+  "session_id": "gemini-7c1d",
+  "cwd": "${PROJECT}",
+  "hook_event_name": "AfterTool",
+  "timestamp": "2026-09-28T09:17:00.000Z",
+  "tool_name": "replace",
+  "tool_input": {
+    "file_path": "${PROJECT}${SEP}src${SEP}main${SEP}java${SEP}com${SEP}acme${SEP}UserDao.java",
+    "old_string": "does not exist",
+    "new_string": "x"
+  },
+  "tool_response": {
+    "llmContent": "Failed to edit, 0 occurrences found",
+    "returnDisplay": "",
+    "error": { "message": "0 occurrences found", "type": "EDIT_NO_OCCURRENCE_FOUND" }
+  }
+}
