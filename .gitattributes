@@ -1,0 +1,16 @@
+# Source and fixtures are LF everywhere: tests compare text with \n, and the shell scripts must not arrive with CRLF.
+* text=auto eol=lf
+
+# Windows launchers need CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Never touch binaries.
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
+*.jar binary
+*.class binary
+*.exe binary
+*.jsa binary

@@ -131,7 +131,7 @@ public final class GradleClasspathExtractor {
     }
 
     private static List<String> withoutOwnOutput(List<String> entries, Path ownBuild) {
-        return entries.stream().filter(e -> !Path.of(e).toAbsolutePath().normalize().startsWith(ownBuild)).toList();
+        return entries.stream().filter(e -> !com.devmanchego.javaguard.project.ProjectPaths.isInside(ownBuild, Path.of(e))).toList();
     }
 
     /**

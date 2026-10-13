@@ -157,7 +157,8 @@ class MavenBuildRunnerTest {
         BuildResult result = runner.testCompile(List.of(moduleB), TIMEOUT);
 
         assertThat(result.success()).isFalse();
-        assertThat(result.findings()).extracting(Finding::ruleId).containsExactly("JG-DEP-003");
+        assertThat(result.findings()).as("findings: %s, notes: %s", result.findings(), result.notes())
+                .extracting(Finding::ruleId).containsExactly("JG-DEP-003");
         Finding f = result.findings().get(0);
         assertThat(f.severity()).isEqualTo(Severity.BLOCKER);
         assertThat(f.message()).contains("org.nonexistent.hallucinated:magic-utils:jar:9.9.9");

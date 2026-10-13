@@ -167,7 +167,8 @@ public final class InProcessCompiler {
         }
         try {
             Path absolute = Path.of(source.toUri()).toAbsolutePath().normalize();
-            return Optional.of(projectRoot.relativize(absolute));
+            return Optional.of(com.devmanchego.javaguard.project.ProjectPaths.relativeTo(projectRoot, absolute)
+                    .orElseGet(() -> projectRoot.relativize(absolute)));
         } catch (IllegalArgumentException e) {
             return Optional.empty();
         }
