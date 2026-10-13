@@ -109,7 +109,7 @@ class EndOfTurnGateTest {
                 Path target = project.resolve(FIXTURES.resolve("maven-simple").relativize(source).toString());
                 if (Files.isDirectory(source)) {
                     Files.createDirectories(target);
-                } else if (!source.toString().replace('\\', '/').contains("/target/")) {
+                } else if (!("/" + FIXTURES.resolve("maven-simple").relativize(source)).replace('\\', '/').contains("/target/")) {
                     Files.copy(source, target);
                 }
             }

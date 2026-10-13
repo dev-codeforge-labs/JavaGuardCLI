@@ -33,7 +33,7 @@ class CheckFullCommandTest extends CommandTestBase {
                 Path target = projectRoot.resolve(FIXTURE.relativize(source).toString());
                 if (Files.isDirectory(source)) {
                     Files.createDirectories(target);
-                } else if (!source.toString().replace('\\', '/').contains("/target/")) {
+                } else if (!("/" + FIXTURE.relativize(source)).replace('\\', '/').contains("/target/")) {
                     Files.copy(source, target);
                 }
             }

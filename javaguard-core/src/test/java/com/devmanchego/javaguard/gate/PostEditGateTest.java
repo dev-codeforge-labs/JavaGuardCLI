@@ -347,7 +347,7 @@ class PostEditGateTest {
                 Path target = to.resolve(from.relativize(source).toString());
                 if (Files.isDirectory(source)) {
                     Files.createDirectories(target);
-                } else if (!source.toString().replace('\\', '/').contains("/target/")) {
+                } else if (!("/" + from.relativize(source)).replace('\\', '/').contains("/target/")) {
                     Files.createDirectories(target.getParent());
                     Files.copy(source, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
