@@ -538,7 +538,7 @@ lives in another module of the build, the finding means the name really is unkno
 I = INFO. Gate: F = post-edit and end-of-turn, E = end-of-turn only. Besides these, the post-edit gate reports PMD
 (`PMD:<rule>`) and Error Prone (`EP:<check>`) findings and javac errors (`JAVAC`); the end-of-turn gate reports test failures
 (`TEST`) and SpotBugs patterns (`SB:<pattern>`, or the JG id they overlap with). The full catalog, with what each rule
-detects, is `.private/spec/02-RULES-CATALOG.md` in the source tree.
+detects, is in the project's documentation (`02-RULES-CATALOG.md` in its specification).
 
 | Id | Title | Sev | Gate |
 |---|---|---|---|

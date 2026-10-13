@@ -1,0 +1,141 @@
+name: CI
+
+# Unit tests on the three platforms, the integration profile (real Maven/Gradle builds and the Spring Data, Flyway and Liquibase
+# oracles), the Windows distribution, and a smoke test of the portable zip on Linux and macOS. macOS has never been run by hand:
+# its jobs are experimental until they have been green once (they report, but do not fail the workflow).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MAVEN_ARGS: -B -ntp
+
+jobs:
+  unit:
+    name: Unit tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, experimental: false }
+          - { os: windows-latest, experimental: false }
+          - { os: macos-latest, experimental: true }
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: mvn verify
+        run: mvn verify
+      - name: Test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: unit-reports-${{ matrix.os }}
+          path: '**/target/surefire-reports/'
+          retention-days: 7
+
+  integration:
+    name: Integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, experimental: false }
+          - { os: windows-latest, experimental: false }
+          - { os: macos-latest, experimental: true }
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: gradle/actions/setup-gradle@94baf225fe0a508e581a564467443d0e2379123b # v4.3.0
+        with:
+          gradle-version: '8.14.3'
+      # Without a git identity the fixtures that commit would fail on a fresh runner.
+      - name: git identity
+        shell: bash
+        run: |
+          git config --global user.name "ci"
+          git config --global user.email "ci@example.invalid"
+      - name: mvn -Pintegration verify
+        run: mvn -Pintegration verify
+      - name: Test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: integration-reports-${{ matrix.os }}
+          path: '**/target/surefire-reports/'
+          retention-days: 7
+
+  dist:
+    name: Windows distribution
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      # PerformanceIT asserts latency limits measured on a developer machine: on a shared runner it measures the runner.
+      # Run it by hand (mvn -Pdist verify) on a machine whose numbers mean something.
+      - name: mvn -Pdist verify (packaged executable tests, without the performance suite)
+        run: mvn -Pdist verify "-Dit.test=!PerformanceIT"
+      - name: Distribution zips
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: distribution
+          path: |
+            javaguard-dist/target/javaguard-*-portable.zip
+            javaguard-dist/target/javaguard-*-windows-x64.zip
+            javaguard-dist/target/dist/size-report.md
+          if-no-files-found: error
+          retention-days: 14
+
+  portable-smoke:
+    name: Portable zip smoke test (${{ matrix.os }})
+    needs: dist
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, experimental: false }
+          - { os: macos-latest, experimental: true }
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: distribution
+          path: dist
+      - name: Smoke test
+        shell: bash
+        run: bash .github/scripts/portable-smoke.sh "$(find dist -name 'javaguard-*-portable.zip' | head -n 1)"

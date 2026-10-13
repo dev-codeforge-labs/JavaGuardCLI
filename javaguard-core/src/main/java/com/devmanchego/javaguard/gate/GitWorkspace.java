@@ -73,7 +73,7 @@ public final class GitWorkspace implements WorkspaceChanges {
                     projectRoot, Map.of(), timeout);
             if (!top.succeeded()) {
                 problem = explain(top.output(), projectRoot).orElse(null);
-                problem().ifPresent(LOG::warning);
+                problem().ifPresent(text -> LOG.warning(text.replaceFirst("^WARNING: ", "")));
                 return Optional.empty();
             }
             problem = null;
