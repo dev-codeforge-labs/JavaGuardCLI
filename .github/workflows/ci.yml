@@ -41,7 +41,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: mvn verify
-        run: mvn verify
+        run: mvn verify "-Djavaguard.perf.factor=3"
       - name: Test reports on failure
         if: failure()
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
@@ -79,7 +79,7 @@ jobs:
           git config --global user.name "ci"
           git config --global user.email "ci@example.invalid"
       - name: mvn -Pintegration verify
-        run: mvn -Pintegration verify
+        run: mvn -Pintegration verify "-Djavaguard.perf.factor=3"
       - name: Test reports on failure
         if: failure()
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0

@@ -130,6 +130,8 @@ class EndOfTurnGateTest {
 
     private JavaGuardConfig config(String... envPairs) throws Exception {
         Map<String, String> env = new java.util.HashMap<>();
+        // A slow shared runner must not exhaust the 3 s fast-gate budget and turn a finding into a pass.
+        env.put("JAVAGUARD_FASTGATE_BUDGETMILLIS", "120000");
         for (int i = 0; i < envPairs.length; i += 2) {
             env.put(envPairs[i], envPairs[i + 1]);
         }

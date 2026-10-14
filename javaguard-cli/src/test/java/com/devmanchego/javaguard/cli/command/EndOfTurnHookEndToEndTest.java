@@ -78,6 +78,8 @@ class EndOfTurnHookEndToEndTest extends CommandTestBase {
                 env.put(k, v);
             }
         });
+        // A slow shared runner must not exhaust the 3 s fast-gate budget (the gate would answer with a partial result and a note).
+        env.put("JAVAGUARD_FASTGATE_BUDGETMILLIS", "120000");
         ProcessEnvironment.overrideForTests(env);
         writeProjectFile("pom.xml", POM);
         writeProjectFile(REL, APP);

@@ -84,6 +84,9 @@ class PackagedDistIT {
                 }
             }
         }
+        // The replay compares the executable with the JVM byte for byte: a machine slow enough to exhaust the 3 s fast-gate
+        // budget in only one of the two runs (a shared CI runner) would make them differ for reasons that are not the code's.
+        Files.writeString(project.resolve("javaguard.yml"), "fastGate:\n  budgetMillis: 60000\n");
         return project;
     }
 

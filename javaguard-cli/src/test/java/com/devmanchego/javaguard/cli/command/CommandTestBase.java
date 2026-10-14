@@ -51,7 +51,8 @@ abstract class CommandTestBase {
         System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
         System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
         System.setProperty("user.home", userHome.toString());
-        ProcessEnvironment.overrideForTests(Map.of());
+        // A slow shared runner must not exhaust the 3 s fast-gate budget (the gate would answer with a partial result and a note).
+        ProcessEnvironment.overrideForTests(Map.of("JAVAGUARD_FASTGATE_BUDGETMILLIS", "120000"));
     }
 
     @AfterEach

@@ -140,11 +140,10 @@ public final class GradleOutputParser {
     private static Optional<Path> relativize(String file, Path projectRoot) {
         try {
             Path absolute = Path.of(file).toAbsolutePath().normalize();
-            Path root = projectRoot.toAbsolutePath().normalize();
-            if (absolute.startsWith(root)) {
-                return Optional.of(root.relativize(absolute));
-            }
-            return Optional.of(Path.of(absolute.getFileName().toString()));
+            // The build tool prints the real, long spelling of the path (/private/var, a Windows long name); the project root
+            // may be spelled through a link or a short name. Only a file really outside the project falls back to its name.
+            return Optional.of(com.devmanchego.javaguard.project.ProjectPaths.relativeTo(projectRoot, absolute)
+                    .orElseGet(() -> Path.of(absolute.getFileName().toString())));
         } catch (InvalidPathException | NullPointerException e) {
             return Optional.empty();
         }
