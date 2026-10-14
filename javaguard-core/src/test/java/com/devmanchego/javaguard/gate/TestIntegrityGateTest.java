@@ -71,7 +71,9 @@ class TestIntegrityGateTest {
     }
 
     private JavaGuardConfig config() throws Exception {
-        return ConfigLoader.load(ConfigSources.standard(project, Optional.empty(), home, Map.of())).config();
+        // A slow shared runner must not exhaust the 3 s fast-gate budget and turn a finding into a pass.
+        return ConfigLoader.load(ConfigSources.standard(project, Optional.empty(), home,
+                Map.of("JAVAGUARD_FASTGATE_BUDGETMILLIS", "120000"))).config();
     }
 
     private static HookEvent event(GateKind gate, List<FileChange> changes) {

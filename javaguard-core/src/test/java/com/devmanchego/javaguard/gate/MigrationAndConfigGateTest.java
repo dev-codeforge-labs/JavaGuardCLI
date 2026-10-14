@@ -50,7 +50,9 @@ class MigrationAndConfigGateTest {
                 + "<artifactId>a</artifactId><version>1</version></project>");
         paths = new JavaGuardPaths(project);
         paths.ensureLayout();
-        config = ConfigLoader.load(ConfigSources.standard(project, Optional.empty(), home, Map.of())).config();
+        // A slow shared runner must not exhaust the 3 s fast-gate budget and turn a finding into a pass.
+        config = ConfigLoader.load(ConfigSources.standard(project, Optional.empty(), home,
+                Map.of("JAVAGUARD_FASTGATE_BUDGETMILLIS", "120000"))).config();
     }
 
     private Path write(String relative, String content) throws IOException {

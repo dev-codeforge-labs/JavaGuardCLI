@@ -97,7 +97,12 @@ class FrameworkRulesGateTest {
         Path file = project.resolve(relative);
         Files.createDirectories(file.getParent());
         Files.writeString(file, content, StandardCharsets.UTF_8);
-        JavaGuardConfig config = ConfigLoader.load(ConfigSources.standard(project, Optional.empty(), home, Map.of())).config();
+        // These tests are about which rules fire, not about speed: a slow shared runner must not exhaust the 3 s fast-gate budget
+        // and turn a missing finding into a pass (the gate then returns a partial result and a note, by design).
+        ConfigSources standard = ConfigSources.standard(project, Optional.empty(), home, Map.of());
+        ConfigSources sources = new ConfigSources(standard.userFile(), standard.projectFile(), standard.explicit(),
+                standard.environment(), Map.of("fastGate.budgetMillis", "60000"));
+        JavaGuardConfig config = ConfigLoader.load(sources).config();
         ChangeTracker tracker = new ChangeTracker(paths, GitClient.none(), CLOCK);
         HookEvent event = new HookEvent(AgentKind.CLAUDE, GateKind.POST_EDIT, "s1", Path.of(System.getProperty("java.io.tmpdir")).toAbsolutePath(),
                 Optional.empty(), "Write", List.of(FileChange.rewrite(file, ChangeType.ADD)), false, Optional.empty(), CLOCK.instant());
