@@ -144,6 +144,8 @@ class CheckCommandTest extends CommandTestBase {
 
     @Test
     void anInvalidConfigurationIsAnErrorInManualMode() throws Exception {
+        // The environment overrides the file: without this the invalid budget below would be replaced by the generous one.
+        ProcessEnvironment.overrideForTests(java.util.Map.of());
         Files.writeString(projectRoot.resolve("javaguard.yml"), "fastGate: { budgetMillis: 0 }\n");
         Path file = writeProjectFile(REL, CLEAN);
 

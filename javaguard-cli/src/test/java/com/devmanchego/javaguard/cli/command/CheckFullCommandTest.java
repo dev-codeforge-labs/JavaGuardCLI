@@ -27,6 +27,8 @@ class CheckFullCommandTest extends CommandTestBase {
                 env.put(k, v);
             }
         });
+        // A slow shared runner must not exhaust the 3 s fast-gate budget (the gate would answer with a partial result and a note).
+        env.put("JAVAGUARD_FASTGATE_BUDGETMILLIS", "120000");
         ProcessEnvironment.overrideForTests(env);
         try (Stream<Path> walk = Files.walk(FIXTURE)) {
             for (Path source : (Iterable<Path>) walk::iterator) {

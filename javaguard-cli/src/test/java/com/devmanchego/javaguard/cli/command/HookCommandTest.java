@@ -47,7 +47,8 @@ class HookCommandTest {
         System.setOut(new PrintStream(out, true, StandardCharsets.UTF_8));
         System.setErr(new PrintStream(err, true, StandardCharsets.UTF_8));
         // The test JVM may run inside an AI agent that exports CLAUDE_PROJECT_DIR etc.
-        ProcessEnvironment.overrideForTests(Map.of());
+        // A slow shared runner must not exhaust the 3 s fast-gate budget (the gate would answer with a partial result and a note).
+        ProcessEnvironment.overrideForTests(Map.of("JAVAGUARD_FASTGATE_BUDGETMILLIS", "120000"));
     }
 
     @AfterEach
@@ -176,6 +177,8 @@ class HookCommandTest {
 
     @Test
     void brokenProjectConfigFallsBackToDefaults() throws IOException {
+        // The environment overrides the file: without this the invalid budget below would be replaced by the generous one.
+        ProcessEnvironment.overrideForTests(Map.of());
         Files.writeString(projectRoot.resolve("javaguard.yml"), "fastGate: { budgetMillis: 0 }\n");
 
         int exit = run("{\"hook_event_name\":\"Stop\"}", "--agent", "claude");
