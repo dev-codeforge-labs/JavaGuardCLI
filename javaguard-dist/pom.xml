@@ -360,7 +360,7 @@
                     <!-- 4. documents and the two zips -->
                     <copy file="${project.basedir}/../README.md" todir="${dist.stage}"/>
                     <copy todir="${dist.stage}">
-                      <fileset dir="${project.basedir}/src/main/dist" includes="USAGE.md,THIRD-PARTY.txt"/>
+                      <fileset dir="${project.basedir}/src/main/dist" includes="USAGE.md,usage_es.md,usage_fr.md,THIRD-PARTY.txt"/>
                       <fileset dir="${project.basedir}/.." includes="LICENSE,NOTICE"/>
                     </copy>
                     <delete file="${project.build.directory}/javaguard-${project.version}-windows-x64.zip" quiet="true"/>
@@ -373,7 +373,7 @@
                     <copy file="${fat.jar}" todir="${dist.portable}"/>
                     <copy file="${dist.stage}/plugins/findsecbugs-plugin.jar" todir="${dist.portable}/plugins"/>
                     <copy todir="${dist.portable}">
-                      <fileset dir="${dist.stage}" includes="README.md,USAGE.md,LICENSE,NOTICE,THIRD-PARTY.txt"/>
+                      <fileset dir="${dist.stage}" includes="README.md,USAGE.md,usage_es.md,usage_fr.md,LICENSE,NOTICE,THIRD-PARTY.txt"/>
                       <fileset dir="${project.basedir}/src/main/dist" includes="javaguard.cmd,javaguard"/>
                     </copy>
                     <delete file="${project.build.directory}/javaguard-${project.version}-portable.zip" quiet="true"/>

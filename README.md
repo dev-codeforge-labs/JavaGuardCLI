@@ -39,7 +39,8 @@ and how to fix it, so you review working code instead of repairing it.
 
 ## Quick start
 
-1. Download `javaguard-<version>-windows-x64.zip` (no Java needed) or `javaguard-<version>-portable.zip` (Java 21+) and unzip it.
+1. Download `javaguard-<version>-windows-x64.zip` (Windows, no Java needed) or `javaguard-<version>-portable.zip` (Java 21+;
+   Linux, macOS, or Windows without the executable) and unzip it. On Linux and macOS use the `javaguard` script in it.
 2. In your project:
 
    ```
@@ -65,11 +66,14 @@ in both zips.
 | Before an edit (optional snapshot) | `PreToolUse` | `BeforeTool` | `PreToolUse` |
 | After an edit (POST_EDIT) | `PostToolUse` | `AfterTool` | `PostToolUse` |
 | End of the turn (END_OF_TURN) | `Stop` | `AfterAgent` | `Stop` |
+| Start of a turn (records the working tree, silent) | `UserPromptSubmit` | `BeforeAgent` | `UserPromptSubmit` |
 | Edit tools watched | `Edit`, `Write`, `MultiEdit` | `write_file`, `replace` | `apply_patch` |
 | A block is expressed as | exit code 2 + report | `{"decision":"deny"}` | `{"decision":"block"}` |
 
-Codex edits made through the shell (`sed`, `cat >`) never reach an edit hook; the END_OF_TURN gate finds them by comparing
-the working tree with the state it recorded.
+Edits made through the shell (`sed`, `cat >`, PowerShell's `Set-Content`; Codex does this as often as it uses `apply_patch`)
+never reach an edit hook. The start-of-turn hook records which relevant files are already uncommitted, and the END_OF_TURN gate
+compares the working tree with that record, so a shell edit is caught at the end of the very turn that made it. Without git
+there is nothing to compare with and shell edits are not detected.
 
 ### Verdicts
 
@@ -123,17 +127,33 @@ model or you can pick up.
 Version 1.0.0: the implementation plan is complete, including resilience rules, Spring/JPA correctness, database migrations,
 configuration files, HTTP/JSON contract changes and authorization consistency.
 
-**Tested.** About 1,650 unit and integration tests, plus end-to-end scenarios, hook-payload replays and a performance suite run
-against the packaged executable (`mvn -Pdist verify`). The two checks most prone to false alarms were validated against the
-real tools: derived queries and JPQL against Spring Data JPA and Hibernate (72 cases), and migration edits against Flyway and
-Liquibase (30 scenarios) - JavaGuard never reports what the real tool accepts.
+### Platforms
 
-**Measured on real projects.** Every one of the newest rules was run on seven open-source projects (Spring PetClinic and its REST and
-microservices variants, two JHipster sample apps, a Spring Boot RealWorld app, and Apache Fineract with about 7,000 Java files)
-and every finding was classified. The false positives it exposed were fixed, and three rules that stayed noisy were demoted
-to INFO.
+| | Windows x64 | Linux | macOS |
+|---|---|---|---|
+| Distribution | `windows-x64` zip (executable, bundled runtime) or portable zip | portable zip (Java 21+) | portable zip (Java 21+) |
+| Test suite | continuous integration | continuous integration, and by hand in Docker (Ubuntu, JDK 21) | continuous integration, **experimental** (never run by hand) |
+| Agents run for real | Claude Code, Gemini CLI, Codex | not yet | not yet |
 
-**Performance** (median over several runs through the packaged executable, Windows):
+### Tested
+
+About 1,800 unit and integration tests, plus end-to-end scenarios, hook-payload replays (including payloads captured from Codex)
+and a performance suite run against the packaged executable (`mvn -Pdist verify`). The two checks most prone to false alarms
+were validated against the real tools: derived queries and JPQL against Spring Data JPA and Hibernate (72 cases), and migration
+edits against Flyway and Liquibase (30 scenarios) - JavaGuard never reports what the real tool accepts.
+
+### Measured on real projects
+
+Every one of the newest rules was run on seven open-source projects (Spring PetClinic and its REST and microservices variants,
+two JHipster sample apps, a Spring Boot RealWorld app, and Apache Fineract with about 7,000 Java files) and every finding was
+classified. The false positives it exposed were fixed, and three rules that stayed noisy were demoted to INFO. Fineract also
+showed that the SQL-injection overlap of SpotBugs/FindSecBugs fires 388 times there, and the 14 read at random were all
+`"select " + mapper.schema() + " where id = ?"` with bound parameters, so the end-of-turn gate only advises on it; the
+blocking decision belongs to the post-edit rule, which blocks only when a method parameter feeds the SQL text.
+
+### Performance
+
+Median over several runs through the packaged executable, Windows:
 
 | Scenario | Target | Measured |
 |---|---|---|
@@ -142,31 +162,43 @@ to INFO.
 | Post-edit, 300-line file, no classpath cache | 800 ms | 707 ms |
 | Post-edit, 300-line file, warm cache (p95) | 1.5 s | 1.03 s |
 | End of turn, nothing changed | 500 ms | 445 ms |
-| End-of-turn overhead over `mvn test` alone | 1.0 s | 1.36 s |
+| End-of-turn overhead over `mvn test` alone | 1.0 s | 1.2 - 1.4 s |
 
 Start-up and the end-of-turn overhead are slightly above their targets (the executable launches a bundled JVM and the gate adds
-analysis to the build); the suite's asserted limits are 300 ms, 350 ms and 1.5 s.
+analysis to the build); the suite's asserted limits are 300 ms, 350 ms and 1.5 s. The portable jar on Linux (Docker) starts in
+about 115 ms and answers a post-edit in 0.8 s without a classpath cache and 1.3 s with it; the start of each turn adds about
+0.25 s (a JVM and a `git status`).
 
-**Verified with real agents (Windows, October 2026).** Claude Code and Gemini CLI were run non-interactively, and Codex
-interactively (0.162.1), with the hooks installed by `javaguard install`: a seeded SQL injection is blocked, the report reaches
-the model, the agent fixes it, and the gates then pass. In Codex, which wrote its file with a PowerShell command no edit hook sees, the end-of-turn gate of the very first turn
-blocked it for SQL built by concatenation and for a byte order mark that javac rejects (with advice on how to save the file),
-then for a statement never closed, until the code was right.
-The real hook payloads of Claude Code and Gemini CLI match the documented contracts. Testing this found and fixed the Windows
-hook command of Gemini and Codex (both run hooks through PowerShell) and a gap in the SQL concatenation rule.
+### Verified with real agents (Windows, October 2026)
 
-**Linux (Docker, Ubuntu, JDK 21, October 2026).** The whole suite, including the integration profile with real Maven and
-Gradle builds and the Spring Data, Flyway and Liquibase oracles, passes (about 1,800 tests; only the Windows-executable tests
-are skipped), and the portable zip works: launcher permissions, `install` for the three agents, `doctor`, `check`, `warmup`,
-and the hook commands run through `sh` with a space in the project path. Testing it also found and fixed two silent failures: a
-project reached through a symbolic link (`/tmp` is `/private/tmp` on macOS) and a repository git refuses to read because it belongs
-to another user, which now produces a warning and a `doctor` row instead of "nothing changed". Under the POSIX locale (`LANG=C`, typical in containers) the JVM cannot handle a path with accents at all: the launcher now
-switches to `C.UTF-8` when the system has it, and a hook that still cannot start exits 0 instead of 5. The end-of-turn gate also
-honours its time budget and leaves no Maven or test processes behind when a test never ends.
+Claude Code and Gemini CLI were run non-interactively, and Codex interactively (0.162.1), with the hooks installed by
+`javaguard install`: a seeded SQL injection is blocked, the report reaches the model, the agent fixes it, and the gates then
+pass. Codex wrote its files with a PowerShell command that no edit hook sees, and the end-of-turn gate of the very first turn
+still blocked it for SQL built by concatenation and for a byte order mark that javac rejects (with advice on how to save the
+file), then for a statement never closed, until the code was right. The real hook payloads of the three agents match the
+documented contracts. Testing this found and fixed the Windows hook command of Gemini and Codex (both run hooks through
+PowerShell), a gap in the SQL concatenation rule, and the first-turn blind spot for shell edits.
 
-**Not yet verified.** macOS, and the three agents running for real on Linux or macOS. Codex payloads were captured on
-Windows only (shell commands, `apply_patch`, prompts and Stop). A turn-start hook records the uncommitted files when each turn begins, so edits a shell command makes
-(Codex does this often) are caught at the end of the very first turn; without git they are not detected.
+### Verified on Linux (Docker, Ubuntu, JDK 21, October 2026)
+
+The whole suite, including the integration profile with real Maven and Gradle builds and the Spring Data, Flyway and Liquibase
+oracles, passes, and the portable zip works: launcher permissions, `install` for the three agents, `doctor`, `check`, `warmup`,
+and the hook commands run through `sh` with a space in the project path. Testing it also found and fixed:
+
+- a project reached through a symbolic link (`/tmp` is `/private/tmp` on macOS), which made every file look outside the project;
+- a repository git refuses to read because it belongs to another user, which now produces a warning and a `doctor` row instead
+  of "nothing changed";
+- a hook started under the POSIX locale (`LANG=C`, typical in containers) in a directory with accents, which the JVM cannot
+  represent: the launcher now switches to `C.UTF-8` when the system has it, and a hook that still cannot start exits 0;
+- a notification command stuck without a sound server, which outlived the hook;
+- Maven reporting a missing artifact differently from the second build on, which hid a hallucinated dependency.
+
+The end-of-turn gate also honours its time budget and leaves no Maven or test processes behind when a test never ends.
+
+### Not yet verified
+
+macOS, and the three agents running for real on Linux or macOS. Codex payloads were captured on Windows only (shell commands,
+`apply_patch`, prompts and Stop).
 
 ## Building from source
 
@@ -177,6 +209,18 @@ mvn verify                    # unit tests
 mvn -Pintegration verify      # plus real Maven/Gradle fixture builds and the Spring Data / Flyway / Liquibase oracles
 mvn -Pdist verify             # Windows: build both zips and test the packaged executable
 ```
+
+`mvn -Pdist verify` includes `PerformanceIT`, whose latency limits are meant for a known machine; on a slow or shared one, run
+`mvn -Pdist verify "-Dit.test=!PerformanceIT"`, and add `-Djavaguard.perf.factor=3` to relax the in-process timing test
+(quote it in PowerShell, which splits an option at the dot).
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request: the unit suite and the integration profile on Ubuntu, Windows
+and macOS, the Windows distribution with its packaged-executable tests, and a smoke test of the portable zip on Linux and
+macOS (`.github/scripts/portable-smoke.sh`, which you can also run by hand against a zip). The macOS jobs are experimental until
+they have been green once. Tests that assert on findings give the fast gate a generous time budget, because a slow shared
+runner would otherwise exhaust the default 3 s and legitimately report a partial result.
 
 ## License
 

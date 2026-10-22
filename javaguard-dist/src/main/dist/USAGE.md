@@ -40,9 +40,14 @@ carries on.
 `runtime\`, `javaguard-<version>-all.jar`, `app.jsa`, `plugins\`). No Java installation is needed.
 
 **macOS, Linux, or Windows without the exe** - `javaguard-<version>-portable.zip`: needs Java 21 or newer (`JAVA_HOME` or
-`java` on `PATH`). Use `javaguard` (macOS/Linux) or `javaguard.cmd` (Windows).
+`java` on `PATH`). Use `javaguard` (macOS/Linux) or `javaguard.cmd` (Windows). The `javaguard` script must be executable
+(`chmod +x javaguard` if your unzip tool dropped the permission). Linux has been tested; macOS has not been run by hand yet,
+and a zip downloaded with a browser may carry the quarantine attribute (`xattr -dr com.apple.quarantine <folder>`).
 
 Put the folder on `PATH`, or pass the full path to `--command` when installing the hooks. Check with `javaguard --version`.
+
+Under the POSIX locale (`LANG=C`, usual in containers and cron) the JVM cannot handle a path with accents; the `javaguard`
+script switches to a `C.UTF-8` locale for its own process when the system has one.
 
 The project being checked needs Maven or Gradle (an executable or the wrapper) for the end-of-turn gate; the post-edit gate
 needs nothing but the sources.
@@ -52,15 +57,17 @@ needs nothing but the sources.
 From the project root:
 
 ```
-javaguard install --agent claude --command C:\tools\javaguard\javaguard.exe
+javaguard install --agent claude --command C:\tools\javaguard\javaguard.exe     # Windows
+javaguard install --agent claude --command /opt/javaguard/javaguard             # Linux, macOS
 javaguard warmup
 javaguard doctor
 ```
 
 1. **`install`** merges JavaGuard's hooks into the agent's configuration file (after a backup; your own hooks and settings
    are kept, and running it again changes nothing) and creates a commented `javaguard.yml` with every key at its default.
-2. **`warmup`** builds the module's classpath cache so edited files are compiled in-process. Without it the post-edit gate
-   skips compilation and says so; the end-of-turn gate rebuilds the cache by itself.
+2. **`warmup`** builds the classpath cache of every module that has sources (the whole reactor of a multi-module build, one
+   Maven or Gradle run per module) so edited files are compiled in-process. Without it the post-edit gate skips compilation
+   and says so; the end-of-turn gate rebuilds the cache by itself.
 3. **`doctor`** checks the Java runtime, configuration, project, build tool, classpath cache, git, the hooks of each agent,
    SpotBugs/FindSecBugs and the second-opinion setup.
 
@@ -79,7 +86,8 @@ To switch JavaGuard off temporarily without uninstalling: set `JAVAGUARD_DISABLE
 
 ## 3. The hooks, agent by agent
 
-JavaGuard uses at most **three hooks** per agent, one per *gate*. Every hook runs the same command,
+JavaGuard uses at most **four hooks** per agent, one per *gate* (the fourth, `turn-start`, only records state). Every hook runs
+the same command,
 `javaguard hook --agent <agent> --gate <gate>`; the agent passes a JSON description of the event on **stdin** and reads
 JavaGuard's answer from **stdout**/**stderr** and the exit code. What differs between agents is only the event names, the
 tool names to match, the units of the timeout and the way a "no" is expressed.
@@ -89,6 +97,7 @@ tool names to match, the units of the timeout and the way a "no" is expressed.
 | `pre-edit` (optional) | Before the agent edits a file | Takes a snapshot of the file as it is, so later gates compare against it. Never speaks | 10 s | 2 s |
 | `post-edit` | Right after the agent edited a file | The fast checks on that file (section 4) | 30 s | `fastGate.budgetMillis`, 3 s |
 | `end-of-turn` | When the agent is about to finish its turn | Build, affected tests, deep analysis, plus everything changed outside the edit tools | 600 s | `fullGate.budgetSeconds`, 540 s |
+| `turn-start` | When the user sends a prompt | Records which relevant files are already uncommitted (see below). Never speaks | 10 s | a `git status` |
 
 JavaGuard enforces its own budget below the agent's timeout, so it always answers before being killed; a budget that runs out
 cancels the running checks and reports what was done, with a note, but never blocks by itself.
@@ -296,7 +305,8 @@ Codex hooks must be enabled (`[features] hooks = true` in Codex's configuration,
 `doctor` warns when they are off. Codex edits files with the `apply_patch` tool, whose input is a patch, not a file path:
 JavaGuard reads the patch headers (`*** Add File:`, `*** Update File:` with an optional `*** Move to:`, `*** Delete File:`) and
 resolves the paths against `cwd`. Codex can also edit through shell commands (`sed`, `cat >`), which never reach an edit
-hook: the end-of-turn gate finds those by comparing the working tree with the state it recorded.
+hook: the end-of-turn gate finds those by comparing the working tree with the state the `turn-start` hook recorded when the
+turn began (Codex often writes its files this way, so it matters here more than for the other agents).
 
 ### 3.4 Summary
 
@@ -473,6 +483,11 @@ state:
   retentionDays: 7
 ```
 
+An environment variable overrides the same key in a file, so `JAVAGUARD_FASTGATE_BUDGETMILLIS=60000` wins over a
+`fastGate.budgetMillis` in `javaguard.yml`. On a slow or shared machine (a CI runner, a container with little CPU) raise
+`fastGate.budgetMillis`: when the budget runs out the gate answers with a partial result and the note "Fast-gate budget ...
+exhausted", which is correct but means some files were not analyzed.
+
 `JAVAGUARD_DISABLED=1`, or a file `.javaguard/disabled`, switches JavaGuard off. Everything it keeps is under `.javaguard/`
 in the project, which ignores itself in git.
 
@@ -526,6 +541,10 @@ lives in another module of the build, the finding means the name really is unkno
 | "git refuses to read this repository ... dubious ownership" | The repository belongs to another user (typical in containers and shared folders), so git will not answer and edits made through a shell cannot be detected. If you trust it: `git config --global --add safe.directory <path>`. `javaguard doctor` shows the same warning. |
 | "No Maven executable or wrapper found" | Install Maven/Gradle or add the wrapper (`mvnw`, `gradlew`); `doctor` shows what was found. |
 | "Offline dependency resolution failed; retried online" | Normal on the first build of a machine; later builds stay offline. |
+| "Maven could not resolve dependencies (no network, or a repository is unreachable)" | An infrastructure note, never a block: the repository gave no usable "not found" answer (offline, a proxy or mirror, a transfer error), so JavaGuard cannot say the artifact does not exist. Fix the network or the mirror configuration and it reports JG-DEP-003 for a real hallucinated dependency. |
+| "Fast-gate budget (3000 ms) exhausted: N file(s) were not analyzed" | The machine was too slow for the post-edit budget. Raise `fastGate.budgetMillis` (section 7). |
+| Codex or Gemini CLI on Windows: "hook exited with code 1" | The hook command must start with PowerShell's call operator (`& "C:/..."`) because both agents run hooks through PowerShell. `javaguard doctor` detects the old form; run `javaguard install` again. |
+| javac: "illegal character: '\ufeff'" | The file starts with a UTF-8 byte order mark, which javac rejects (Windows PowerShell's `Out-File`, `Set-Content -Encoding UTF8` and `>` add one). Save it as UTF-8 without BOM. The report says so itself. |
 | The agent stops with a HALT | Read `AI_HANDOFF_CONTEXT.md`, give it to another model or fix the problem; `javaguard state clear --session <id>` starts over. |
 | A hook seems to do nothing | `javaguard doctor`; check `JAVAGUARD_DISABLED` and `.javaguard/disabled`; run with `--verbose` and read `.javaguard/logs/javaguard.log`. |
 | "JavaGuard internal error" in the agent | JavaGuard failed open; the log has the details. Please report it. |
