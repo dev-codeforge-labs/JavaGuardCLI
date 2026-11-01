@@ -47,8 +47,10 @@ final class Sec004XxeVulnerable extends AbstractAstCheck {
             boolean isReaderCreation = READER_METHODS.contains(name);
             if ((isFactoryCreation || isReaderCreation) && !hasMitigationInMethod(call)) {
                 out.add(finding(ctx, call, "An XML parser is created without disabling DTDs or external entities.",
-                        "Disable DOCTYPE declarations (e.g. the 'disallow-doctype-decl' feature) or external "
-                                + "general/parameter entities before parsing untrusted XML."));
+                        "Disable DTDs before parsing: factory.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", "
+                                + "true) on DocumentBuilderFactory/SAXParserFactory; setProperty(XMLInputFactory.SUPPORT_DTD, "
+                                + "false) on XMLInputFactory; setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, \"\") and "
+                                + "ACCESS_EXTERNAL_STYLESHEET/SCHEMA on TransformerFactory/SchemaFactory."));
             }
         }
         return out;

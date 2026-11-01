@@ -38,7 +38,9 @@ final class Ai005PlaceholderLiteral extends AbstractAstCheck {
             String value = lit.asString();
             if (isPlaceholder(value)) {
                 out.add(finding(ctx, lit, "The string literal \"" + value + "\" looks like a placeholder value left behind.",
-                        "Replace it with the real value, or load it from configuration."));
+                        "Read the value from configuration under a named key (@Value(\"${...}\"), @ConfigurationProperties or an "
+                                + "environment variable). If the real value is not known, stop and ask the user for it "
+                                + "instead of inventing one."));
             }
         }
         return out;

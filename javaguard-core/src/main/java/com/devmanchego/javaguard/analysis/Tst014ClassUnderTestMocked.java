@@ -80,6 +80,7 @@ final class Tst014ClassUnderTestMocked extends AbstractAstCheck {
     }
 
     private static String remediation(String x) {
-        return "Use a real " + x + " (e.g. @InjectMocks) and mock only its collaborators.";
+        return "Use a real " + x + " and mock only its collaborators: @InjectMocks " + x + ", or new " + x
+                + "(mock(Collaborator.class)).";
     }
 }

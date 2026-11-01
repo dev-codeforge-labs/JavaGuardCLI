@@ -55,8 +55,8 @@ final class Spr002SelfInvocationBypassesProxy extends AbstractAstCheck {
                             if (!covered) {
                                 out.add(finding(ctx, call, caller.getNameAsString() + "() calls " + call.getNameAsString()
                                         + "() on the same object, so its @" + annotation + " is bypassed.",
-                                        "Call it through another bean (or an injected self-reference), or move it to a "
-                                                + "separate component."));
+                                        "Move " + call.getNameAsString() + "() to a separate @Service bean, inject that bean "
+                                                + "here and call it through the injected reference."));
                             }
                         }
                     }

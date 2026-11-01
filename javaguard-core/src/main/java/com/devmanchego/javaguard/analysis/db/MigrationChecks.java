@@ -33,7 +33,8 @@ public final class MigrationChecks {
     public static final List<RuleInfo> RULES = List.of(DB_001, DB_002, DB_003);
 
     private static final String NEW_MIGRATION = "Restore the file exactly as committed and put the change in a new migration with the "
-            + "next version. If this migration was never applied to any shared database, disable JG-DB-001 for this path in javaguard.yml.";
+            + "next version. If this migration was never applied to any shared database, tell the user: only they can exclude "
+            + "it from JG-DB-001 in javaguard.yml.";
 
     private MigrationChecks() {
     }

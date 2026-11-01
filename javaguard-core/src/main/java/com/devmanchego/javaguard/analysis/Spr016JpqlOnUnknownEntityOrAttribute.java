@@ -85,7 +85,8 @@ final class Spr016JpqlOnUnknownEntityOrAttribute extends AbstractAstCheck {
             int index = i;
             JpqlChecker.check(queries.get(i), model, types).ifPresent(problem -> out.add(finding(ctx, sites.get(index),
                     "This JPQL query is invalid: " + problem + ". The query fails when it is created (at start-up for @Query and named queries).",
-                    "Use the entity name and attribute names exactly as mapped, or check the query against the entity class.")));
+                    "Open the entity class and use its entity name and field names exactly (they are case-sensitive and "
+                            + "are not table or column names); if the query is SQL, set nativeQuery = true.")));
         }
         return out;
     }

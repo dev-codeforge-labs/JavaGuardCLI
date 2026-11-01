@@ -56,7 +56,9 @@ final class Sec007TlsVerificationDisabled extends AbstractAstCheck {
             if (lambda.getParameters().size() == 2 && alwaysReturnsTrue(lambda)) {
                 out.add(finding(ctx, lambda, "A 2-argument lambda unconditionally returns true; this shape matches a "
                         + "HostnameVerifier that accepts every host.",
-                        "Verify the hostname actually matches the certificate; do not accept every connection."));
+                        "Remove the custom HostnameVerifier and keep the default one "
+                                + "(HttpsURLConnection.getDefaultHostnameVerifier()). For a private CA, add its certificate "
+                                + "to a truststore instead of disabling the check."));
             }
         }
         for (NameExpr n : ctx.unit().findAll(NameExpr.class)) {

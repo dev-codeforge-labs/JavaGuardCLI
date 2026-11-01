@@ -19,6 +19,7 @@ import com.devmanchego.javaguard.config.ConfigLoader;
 import com.devmanchego.javaguard.config.ConfigSources;
 import com.devmanchego.javaguard.config.JavaGuardConfig;
 import com.devmanchego.javaguard.config.LoadedConfig;
+import com.devmanchego.javaguard.gate.ConfigGuard;
 import com.devmanchego.javaguard.gate.EndOfTurnGate;
 import com.devmanchego.javaguard.gate.EndOfTurnState;
 import com.devmanchego.javaguard.gate.GitWorkspace;
@@ -145,11 +146,14 @@ public final class HookCommand implements Callable<Integer> {
         AgentAdapter adapter = AgentAdapters.forKind(kind.get());
         try {
             HookEvent event = adapter.parse(payload, ParseContext.now(requestedGate, root));
+            // What configures JavaGuard is recorded when the session is first seen, before any edit of the agent can reach it.
+            ConfigGuard guard = new ConfigGuard(paths, Path.of(System.getProperty("user.home")));
+            guard.ensureBaseline(event.sessionId());
             JavaGuardConfig config = null;
             if (event.gate() != GateKind.PRE_EDIT && event.gate() != GateKind.TURN_START) {
                 // PRE_EDIT only snapshots (specification section 9.1, target < 300 ms): loading
                 // YAML configuration would roughly double its cost for nothing it uses.
-                config = loadConfig(root, env).config();
+                config = loadConfig(root, env, guard, event.sessionId()).config();
             }
             LOG.info(() -> "hook " + event.agent().cliName() + " " + event.gate().cliName()
                     + " session=" + event.sessionId() + " tool=" + event.toolName()
@@ -159,10 +163,10 @@ public final class HookCommand implements Callable<Integer> {
                 return adapter.render(event.gate(), AgentFeedback.pass());
             }
             if (event.gate() == GateKind.POST_EDIT && !event.changes().isEmpty()) {
-                return adapter.render(event.gate(), runPostEditGate(paths, config, event));
+                return adapter.render(event.gate(), runPostEditGate(paths, config, event, guard));
             }
             if (event.gate() == GateKind.END_OF_TURN) {
-                return adapter.render(event.gate(), runEndOfTurnGate(paths, config, env, event));
+                return adapter.render(event.gate(), runEndOfTurnGate(paths, config, env, event, guard));
             }
             trackChanges(paths, event);
             return adapter.render(event.gate(), AgentFeedback.pass());
@@ -186,16 +190,17 @@ public final class HookCommand implements Callable<Integer> {
         }
     }
 
-    private static AgentFeedback runPostEditGate(JavaGuardPaths paths, JavaGuardConfig config, HookEvent event) {
+    private static AgentFeedback runPostEditGate(JavaGuardPaths paths, JavaGuardConfig config, HookEvent event,
+                                                 ConfigGuard guard) {
         PostEditGate gate = new PostEditGate(paths, config, newTracker(paths), Clock.systemUTC(),
                 new GitWorkspace(new ProcessRunner(), paths.projectRoot(), GIT_TIMEOUT));
-        return feedback("post-edit", gate.run(event), config, event, paths);
+        return feedback("post-edit", guard.enforce(gate.run(event), event.sessionId()), config, event, paths);
     }
 
     private static AgentFeedback runEndOfTurnGate(JavaGuardPaths paths, JavaGuardConfig config, Map<String, String> env,
-                                                  HookEvent event) {
+                                                  HookEvent event, ConfigGuard guard) {
         EndOfTurnGate gate = EndOfTurnGate.standard(paths, config, env, newTracker(paths), gitClient(), GIT_TIMEOUT, Clock.systemUTC());
-        return feedback("end-of-turn", gate.run(event), config, event, paths);
+        return feedback("end-of-turn", guard.enforce(gate.run(event), event.sessionId()), config, event, paths);
     }
 
     /** The agent report for a non-PASS result; the gate's notes go to the user only, never to the model. */
@@ -277,10 +282,14 @@ public final class HookCommand implements Callable<Integer> {
      * Configuration errors never block the agent: hook mode falls back to
      * defaults and logs the problems (specification section 18.1).
      */
-    private LoadedConfig loadConfig(Path root, Map<String, String> env) {
+    private LoadedConfig loadConfig(Path root, Map<String, String> env, ConfigGuard guard, String sessionId) {
         Optional<Path> explicitConfig = Optional.ofNullable(parent == null ? null : parent.configFile);
         ConfigSources sources = ConfigSources.standard(root, explicitConfig,
                 Path.of(System.getProperty("user.home")), env);
+        if (explicitConfig.isEmpty() && guard.hasBaseline(sessionId)) {
+            // The configuration of the session is the one it began with: an agent editing javaguard.yml changes nothing.
+            sources = new ConfigSources(guard.frozenUserFile(sessionId), guard.frozenProjectFile(sessionId), false, env, Map.of());
+        }
         try {
             LoadedConfig loaded = ConfigLoader.load(sources);
             loaded.warnings().forEach(w -> LOG.warning(w));

@@ -45,8 +45,14 @@ class PerformanceIT {
     Path work;
 
     @BeforeAll
-    static void packaged() {
+    static void packaged() throws Exception {
         assumeTrue(Files.isRegularFile(EXE), "Run 'mvn -Pdist package' first: " + EXE + " not found");
+        // The numbers are those of an installed distribution: `javaguard install` builds the start-up archive in its folder.
+        Process optimize = new ProcessBuilder(EXE.toString(), "optimize", "--force").redirectErrorStream(true).start();
+        optimize.getOutputStream().close();
+        String output = new String(optimize.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(optimize.waitFor(300, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+        assertThat(optimize.exitValue()).as(output).isZero();
     }
 
     @AfterAll

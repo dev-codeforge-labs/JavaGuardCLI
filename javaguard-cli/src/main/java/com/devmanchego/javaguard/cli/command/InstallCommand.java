@@ -84,6 +84,7 @@ public final class InstallCommand implements Callable<Integer> {
             }
         }
         if (result == ExitCode.SUCCESS.code() && !dryRun) {
+            StartupArchive.target().ifPresent(target -> OptimizeCommand.ensure(target, false));
             System.out.println("Next: run 'javaguard warmup' to build the classpath cache so edits are compiled, "
                     + "then 'javaguard doctor'.");
         }

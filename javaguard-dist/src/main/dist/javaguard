@@ -13,7 +13,7 @@ case "${LC_ALL:-${LC_CTYPE:-$LANG}}" in
   *[Uu][Tt][Ff]-8*|*[Uu][Tt][Ff]8*) ;;
   *) if locale -a 2>/dev/null | grep -qi '^c\.utf-\{0,1\}8$'; then LC_ALL=C.UTF-8; export LC_ALL; fi ;;
 esac
-exec "$JAVA" -XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xss1m -Xmx1g \
+exec "$JAVA" -Djavaguard.launcher="$HERE/javaguard" -XX:SharedArchiveFile="$HERE/app.jsa" -Xlog:disable -XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xss1m -Xmx1g \
   --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED \
   --add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
   --add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED \

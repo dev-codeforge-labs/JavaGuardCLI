@@ -55,7 +55,8 @@ final class Rel011ControlFlowInFinally extends AbstractAstCheck {
         for (T s : statements) {
             if (directlyIn(s, finallyBlock)) {
                 out.add(finding(ctx, s, "'" + keyword + "' inside finally silently discards any exception the try/catch was propagating.",
-                        "Move this out of finally, or ensure the original exception is preserved (e.g. addSuppressed)."));
+                        "Move the " + keyword + " after the try statement; finally should only release resources, and "
+                                + "try-with-resources does that for you while keeping the original exception."));
             }
         }
     }

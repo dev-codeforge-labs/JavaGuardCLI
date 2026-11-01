@@ -81,7 +81,8 @@ public final class ApiCompatibilityAnalyzer implements DeepAnalyzer {
         for (ApiSignatures.Difference difference : differences) {
             if (out.size() == MAX_FINDINGS_PER_FILE) {
                 String message = "(+" + (differences.size() - MAX_FINDINGS_PER_FILE) + " more public API changes in this file.)";
-                out.add(finding(rel, 1, message, "Review the file's public API as a whole."));
+                out.add(finding(rel, 1, message, "Apply the same fix to every changed public member: keep each old signature next to the new "
+                        + "one (deprecated, delegating to it), or update every consumer in the same change."));
                 break;
             }
             ApiSignatures.Signature before = difference.before();

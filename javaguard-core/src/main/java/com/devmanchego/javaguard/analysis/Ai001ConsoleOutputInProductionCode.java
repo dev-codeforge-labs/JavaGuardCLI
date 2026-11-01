@@ -52,9 +52,23 @@ final class Ai001ConsoleOutputInProductionCode extends AbstractAstCheck {
                 continue;
             }
             out.add(finding(ctx, call, "System." + stream + "." + call.getNameAsString() + "(...) is a debug print left in production code.",
-                    "Use a logger (SLF4J) with an appropriate level instead of printing to the console directly."));
+                    usesSlf4j(ctx) ? WITH_LOGGER : WITHOUT_LOGGER));
         }
         return out;
+    }
+
+    private static final String WITH_LOGGER = "Log it through the class's SLF4J logger (log.info/debug/warn(...)) instead of "
+            + "printing to the console.";
+    private static final String WITHOUT_LOGGER = "If the project already uses SLF4J (Spring Boot includes it), add "
+            + "'private static final Logger log = LoggerFactory.getLogger(<ThisClass>.class);' and log instead. Otherwise do not "
+            + "add a logging library on your own: stop and ask the user whether to add SLF4J, or whether console output is fine "
+            + "for this program (then the user turns JG-AI-001 off in javaguard.yml).";
+
+    /** The file already logs through SLF4J (an import of it, or Lombok's @Slf4j). */
+    private static boolean usesSlf4j(AstCheckContext ctx) {
+        return ctx.unit().getImports().stream()
+                .map(i -> i.getNameAsString())
+                .anyMatch(name -> name.startsWith("org.slf4j") || name.equals("lombok.extern.slf4j.Slf4j"));
     }
 
     private String consoleStream(Expression scope) {

@@ -47,7 +47,8 @@ final class Tst005TrivialAssertion extends AbstractAstCheck {
             String reason = trivialReason(call);
             if (reason != null) {
                 out.add(finding(ctx, call, "Trivial assertion: " + reason + ", so it can never fail.",
-                        "Assert something about the code under test, or delete the assertion."));
+                        "Replace it with an assertion on a result of the code under test (a return value, a state change "
+                                + "or an interaction), e.g. assertEquals(expected, service.call(input)); do not just delete it."));
             }
         }
         return out;

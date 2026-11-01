@@ -54,7 +54,8 @@ final class Ai004CommentedOutCodeAdded extends AbstractAstCheck {
             List<LineComment> group = lineComments.subList(start, end + 1);
             if (group.size() >= MIN_CONSECUTIVE_LINES && looksLikeCode(group)) {
                 out.add(finding(ctx, group.get(0), group.size() + " consecutive commented-out lines parse as Java statements.",
-                        "Delete dead code instead of commenting it out; version control already keeps the history."));
+                        "Delete dead code instead of commenting it out; version control already keeps the history. If the "
+                                + "lines are an explanation, rewrite them as prose."));
             }
             start = end + 1;
         }

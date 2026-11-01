@@ -44,9 +44,20 @@ final class Sec013InjectionConcatenation extends AbstractAstCheck {
             if (DynamicStringBuilds.isDynamic(call.getArgument(argIndex))) {
                 out.add(finding(ctx, call, "A " + type + "." + call.getNameAsString()
                         + "() expression is built by concatenation.",
-                        "Use the API's parameterized/binding form instead of concatenating untrusted input into the expression text."));
+                        REMEDIATIONS.get(type)));
             }
         }
         return out;
     }
+
+    /** Keep the expression text constant and pass the value separately, in each API's own way. */
+    private static final Map<String, String> REMEDIATIONS = Map.of(
+            "DirContext", "Keep the filter constant and pass the values as arguments: search(name, \"(uid={0})\", "
+                    + "new Object[] {value}, controls).",
+            "XPath", "Keep the expression constant with a variable ($name) and supply the value through "
+                    + "xpath.setXPathVariableResolver(...).",
+            "ExpressionParser", "Keep the expression constant with a variable (#name) and set the value on the "
+                    + "EvaluationContext (context.setVariable(\"name\", value)); for untrusted input use a SimpleEvaluationContext.",
+            "ScriptEngine", "Keep the script constant and pass the values as bindings: engine.eval(script, bindings) "
+                    + "with bindings.put(\"name\", value).");
 }

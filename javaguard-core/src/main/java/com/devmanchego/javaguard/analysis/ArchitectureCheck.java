@@ -57,8 +57,9 @@ public final class ArchitectureCheck extends AbstractAstCheck {
                     if (PackageGlobs.matches(forbidden, imported)) {
                         out.add(finding(ctx, imp, "Package " + (filePackage.isEmpty() ? "(default)" : filePackage)
                                 + " must not depend on " + forbidden + ", but imports " + imp.getNameAsString() + ".",
-                                "Depend on an abstraction in an allowed package instead, or move the code (architecture "
-                                        + "rule from: " + rule.from() + ")."));
+                                "Declare an interface in a package this one may use, implement it in the forbidden "
+                                        + "package and depend on the interface; or move this code to a package allowed to use it "
+                                        + "(architecture rule from: " + rule.from() + ")."));
                         break;
                     }
                 }

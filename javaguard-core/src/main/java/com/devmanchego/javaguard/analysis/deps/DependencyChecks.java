@@ -63,7 +63,9 @@ public final class DependencyChecks {
             if (was == null) {
                 findings.add(finding(ADDED, relativePath, line, lines, now, "Dependency " + now.coordinates() + " was added"
                         + (now.scope().isEmpty() ? "." : " (" + now.scope() + ")."),
-                        "Check that it is needed and that the coordinates are real; prefer a version the build already manages."));
+                        "Prefer the JDK or a library the build already declares, and remove this one if the change works without "
+                                + "it. If a new library is really needed, stop and tell the user which one and why; never "
+                                + "guess coordinates or versions."));
             }
             if (!now.version().isEmpty() && UNPINNED_VERSION.matcher(now.version()).matches()
                     && (was == null || !was.version().equals(now.version()))) {
