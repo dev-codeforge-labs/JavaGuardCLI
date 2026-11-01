@@ -117,7 +117,10 @@ class ProcessRunnerTest {
         Files.createDirectories(pidDir);
         List<String> command = TestJvm.command(ProcessTreeTestHelper.class, "parent", pidDir.toString());
 
-        ProcessResult result = runner.run(command, dir, Map.of(), Duration.ofMillis(500));
+        // Two JVMs must have started and written their pid before the timeout kills the tree; 500 ms is not enough on a slow shared
+        // runner. -Djavaguard.perf.factor relaxes it the same way it relaxes the other timing tests.
+        long factor = Math.max(1, Long.getLong("javaguard.perf.factor", 1L));
+        ProcessResult result = runner.run(command, dir, Map.of(), Duration.ofSeconds(3 * factor));
 
         assertThat(result.timedOut()).isTrue();
         assertThat(result.exitCode()).isEmpty();
