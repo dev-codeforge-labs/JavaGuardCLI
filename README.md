@@ -55,6 +55,7 @@ and how to fix it, so you review working code instead of repairing it.
 Everything else - the hooks of each agent, commands, every configuration key, false positives and suppressions,
 troubleshooting, the rule list - is in the user manual, [USAGE.md](javaguard-dist/src/main/dist/USAGE.md), which also ships
 in both zips. Translations: [Español](javaguard-dist/src/main/dist/usage_es.md) and [Français](javaguard-dist/src/main/dist/usage_fr.md).
+Every rule, with what it catches, why it matters and how to fix it, is explained in [rules.md](javaguard-dist/src/main/dist/rules.md) ([Español](javaguard-dist/src/main/dist/rules_es.md), [Français](javaguard-dist/src/main/dist/rules_fr.md)).
 
 ## How it works
 
