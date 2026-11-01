@@ -45,8 +45,10 @@ ne modifie jamais votre code ; il n'exécute jamais de commande git qui change l
 ## 1. Installation
 
 **Windows** - `javaguard-<version>-windows-x64.zip` : décompressez-le où vous voulez et gardez les fichiers ensemble
-(`javaguard.exe`, `runtime\`, `javaguard-<version>-all.jar`, `app.jsa`, `plugins\`). Aucune installation de Java n'est
+(`javaguard.exe`, `runtime\`, `javaguard-<version>-all.jar`, `plugins\`). Aucune installation de Java n'est
 nécessaire.
+Installez-le dans un chemin court : Windows ne peut pas démarrer un programme dont le chemin complet atteint 260 caractères,
+laissez donc le dossier sous environ 200 caractères. Les espaces et les caractères accentués dans le chemin ne posent pas de problème.
 
 **macOS, Linux ou Windows sans l'exe** - `javaguard-<version>-portable.zip` : nécessite Java 21 ou supérieur (`JAVA_HOME` ou
 `java` dans le `PATH`). Utilisez `javaguard` (macOS/Linux) ou `javaguard.cmd` (Windows). Le script `javaguard` doit être
@@ -77,6 +79,9 @@ javaguard doctor
 1. **`install`** fusionne les hooks de JavaGuard dans le fichier de configuration de l'agent (après une sauvegarde ; vos
    propres hooks et réglages sont conservés, et le relancer ne change rien) et crée un `javaguard.yml` commenté avec toutes
    les clés à leur valeur par défaut.
+   Elle construit aussi l'archive de démarrage (`app.jsa`, à côté du jar) qui rend chaque hook environ 0,4 s plus rapide.
+   L'archive mémorise l'emplacement de la distribution : après avoir déplacé le dossier, exécutez `javaguard optimize --force`
+   (ou `install` de nouveau) ; une archive absente ou périmée coûte de la vitesse, jamais de l'exactitude, et `doctor` la signale.
 2. **`warmup`** construit le cache de classpath de chaque module qui a des sources (tout le reactor d'un build multimodule,
    une exécution de Maven ou de Gradle par module) afin que les fichiers modifiés soient compilés en processus. Sans lui, la
    barrière post-edit saute la compilation et le dit ; la barrière end-of-turn reconstruit le cache d'elle-même.
@@ -346,6 +351,45 @@ end-of-turn les trouve en comparant l'arbre de travail avec l'état qu'a enregis
 `--agent` peut être omis en exécutant `hook` à la main : JavaGuard reconnaît alors l'agent d'après le payload. `install` l'écrit
 toujours explicitement.
 
+### 3.5 Appeler directement le jar (quand `install` est inutilisable)
+
+`javaguard install` ne fait qu'écrire les entrées de hooks ; les agents exécutent ce qu'ils y trouvent. Si l'installateur ou le lanceur
+posent problème (poste restreint, proxy ou VPN exigeant une configuration précise, dossier impossible à ajouter au `PATH`), écrivez les
+entrées à la main et appelez le jar via Java. Rien d'autre n'est nécessaire : ni exécutable, ni entrée dans le `PATH`, ni archive de démarrage.
+
+La commande est la même pour tous les hooks ; seuls `--agent` (`claude`, `gemini`, `codex`) et `--gate` (`pre-edit`, `post-edit`,
+`end-of-turn`) changent. Utilisez des barres `/` et des guillemets simples autour des chemins.
+
+| Agent | Fichier | `command` |
+|---|---|---|
+| Gemini CLI (Windows) | `.gemini/settings.json` | `& 'C:/chemin/vers/java.exe' -jar 'C:/chemin/vers/javaguard-1.0.0-all.jar' hook --agent gemini --gate post-edit` |
+| Codex (Windows) | `.codex/hooks.json`, dans `commandWindows` | `& 'C:/chemin/vers/java.exe' -jar 'C:/chemin/vers/javaguard-1.0.0-all.jar' hook --agent codex --gate post-edit` |
+| Claude Code | `.claude/settings.json` | `java -jar "/chemin/vers/javaguard-1.0.0-all.jar" hook --agent claude --gate post-edit` |
+
+Gemini CLI et Codex exécutent la commande via PowerShell sous Windows ; elle doit donc commencer par l'opérateur d'appel `&` (section 9).
+Conservez les délais des entrées générées : 10 s pour `pre-edit`, 30 s pour `post-edit` et 600 s pour `end-of-turn` (en
+millisecondes pour Gemini CLI). Exemple pour Gemini CLI :
+
+```json
+"AfterTool": [
+  {
+    "matcher": "write_file|replace",
+    "hooks": [
+      {
+        "name": "javaguard-post-edit",
+        "type": "command",
+        "command": "& 'C:/tools/java/bin/java.exe' -jar 'C:/tools/javaguard-1.0.0/javaguard-1.0.0-all.jar' hook --agent gemini --gate post-edit",
+        "timeout": 30000
+      }
+    ]
+  }
+]
+```
+
+Gardez `plugins/` à côté du jar pour que SpotBugs fonctionne. Sans l'archive de démarrage, chaque hook prend environ 0,4 s de plus ;
+exécutez `javaguard optimize` et ajoutez `-XX:SharedArchiveFile=<dossier>/app.jsa -Xlog:disable` après `java` pour la retrouver. Les entrées écrites ainsi
+sont protégées comme celles générées (JG-SUP-003) tant que `hook --agent <agent> --gate <phase>` reste dans la commande.
+
 ## 4. Ce que voit l'agent
 
 Chaque barrière se termine par l'un de quatre verdicts :
@@ -368,6 +412,29 @@ Comment chaque verdict parvient à chaque agent :
 
 Le hook pre-edit ne parle jamais. Les suppressions que l'agent a ajoutées pendant la session (section 8) vous sont toujours
 montrées dans un `systemMessage`, même en PASS.
+
+**Quels résultats bloquent ?** Tout résultat grave n'arrête pas l'agent ; c'est la sévérité (section 10) qui décide, et elle dépend du gate :
+
+| Gate | Bloque | Tout le reste |
+|---|---|---|
+| Après une édition (post-edit) | Résultats BLOCKER, source qui ne se parse pas (`JG-SYN-001`) et résultats d'intégrité des tests (`JG-TST-*`) de CRITICAL ou plus | ADVISE : le modèle est informé, l'agent continue |
+| Fin de tour | Erreurs de compilation, une dépendance introuvable (`JG-DEP-003`), résultats de CRITICAL ou plus, résultats d'intégrité des tests de MAJOR ou plus et tests en échec | ADVISE : un résumé d'une ligne pour vous |
+
+Ainsi, une règle CRITICAL comme `JG-SEC-002` (commande construite à partir d'une entrée) n'est qu'un conseil juste après l'édition. Un résultat que
+SpotBugs signale en fin de tour porte le rang propre de SpotBugs, qui peut être inférieur à la sévérité du catalogue ; la ligne `Severity` du
+rapport complet (`.javaguard/reports/last-report.md`) est celle qui a été appliquée. Pour qu'une règle bloque dans les deux gates, augmentez sa
+sévérité dans `javaguard.yml` :
+
+```yaml
+rules:
+  JG-SEC-002: { severity: BLOCKER }
+  JG-PERF-002: { severity: BLOCKER }
+```
+
+Le rapport se termine par un paragraphe de consigne pour l'agent : corriger la cause racine et réécrire le code pour que le constat disparaisse
+tout en gardant le comportement demandé ; ne pas toucher à la configuration de JavaGuard ni aux tests ; et, quand la seule façon de respecter une règle
+contredit ce que vous avez demandé (ou que le constat semble erroné), **s'arrêter et vous l'expliquer en citant la règle, au lieu de réessayer**. Cette
+dernière phrase est l'issue face à une règle bloquante que l'agent ne peut pas satisfaire ; s'il échoue malgré tout, l'escalade de la section 5 se termine par un HALT.
 
 Toute exécution autre que PASS écrit aussi un rapport humain complet sous `.javaguard/reports/`, et le message à l'agent est
 plafonné (`report.maxFindings`, `report.maxChars` ; les constats bloquants ne sont jamais tronqués). Les formats autres que le
@@ -405,9 +472,10 @@ consultation commence et se termine.
 | `check --full [fichiers]` | Le pipeline end-of-turn à la main (compilation, tests concernés, analyse approfondie), p. ex. en CI |
 | `doctor` | Rapport sur l'environnement et l'installation |
 | `warmup` | Construire le cache de classpath de chaque module qui a des sources (tout le reactor d'un build multimodule, une exécution de Maven ou de Gradle par module) |
+| `optimize [--force]` | Construire l'archive de démarrage (`app.jsa`) à côté du jar de la distribution empaquetée ; `install` le fait aussi. Avec elle, les hooks démarrent environ 0,4 s plus vite |
 | `handoff [--session id] [--consult a]` | Écrire la passation d'une session ; éventuellement interroger un second modèle et attendre sa réponse |
 | `rules [--category c]` | Chaque règle avec sa configuration effective |
-| `state clear --session id\|--all`, `baseline reset` | Oublier l'état de session ou les références |
+| `state clear --session id\|--all`, `baseline reset` | Oublier l'état de session ou les références (`baseline reset` accepte aussi la configuration actuelle de JavaGuard comme celle de la session) |
 
 Options globales : `--project-dir <dir>`, `--config <fichier>`, `--verbose` (journalise au niveau FINE dans
 `.javaguard/logs/javaguard.log`).
@@ -532,6 +600,20 @@ règle convient, y compris `PMD:<règle>`, `EP:<contrôle>` et `SB:<motif>`.
 suppression ajoutée par la session, à chaque exécution d'une barrière, et une suppression sans motif est elle-même un constat
 (JG-SUP-001). Avec `suppressions.allowAgentAdded: false`, une suppression ajoutée par l'agent bloque (JG-SUP-002).
 
+**L'agent peut-il désactiver JavaGuard en modifiant sa configuration ?** Non. Au premier hook d'une session, JavaGuard enregistre votre
+`javaguard.yml`, `~/.javaguard/config.yml` et ses propres entrées de hooks dans `.claude/settings.json`, `.gemini/settings.json` et
+`.codex/hooks.json`. Pendant le reste de la session, il lit la copie enregistrée de la configuration : une modification ne change donc
+rien, et tout changement de ces fichiers est un BLOCKER (JG-SUP-003) tant que l'agent ne les a pas restaurés. Les autres réglages des
+fichiers de l'agent (permissions, thème) ne sont pas comparés. Un changement que vous voulez en cours de session s'accepte avec
+`javaguard baseline reset` ou en ouvrant une nouvelle session ; modifiez les fichiers avant d'ouvrir la session. Les modifications par
+le shell sont détectées en fin de tour.
+
+**Qui désactive une règle ?** Vous seul. Quand la seule issue d'un constat est de changer la configuration (une règle inadaptée,
+une sortie console acceptable dans un prototype, une ancienne migration jamais appliquée), le rapport demande à l'agent de s'arrêter et
+de vous poser la question au lieu de modifier `javaguard.yml`. Par exemple, pour la sortie console (JG-AI-001) dans un projet sans
+logger, l'agent propose d'ajouter SLF4J ou demande si `System.out` convient à ce programme ; dans le second cas, c'est vous qui ajoutez
+l'exception.
+
 **Une règle ne convient pas du tout à mon projet.** `rules: { <id>: { enabled: false } }`, ou restreignez-la avec des globs
 `exclude`, ou baissez sa `severity` (BLOCKER, CRITICAL, MAJOR, INFO). `javaguard rules` montre la configuration effective.
 
@@ -563,6 +645,7 @@ tranquille. Si l'entité vit dans un autre module du build, le constat signifie 
 
 | Symptôme | Que faire |
 |---|---|
+| `doctor` : « Startup archive ... not built » ou « stale » | Exécutez `javaguard optimize --force`. Les hooks fonctionnent sans elle mais démarrent environ 0,4 s plus lentement ; il faut la reconstruire après avoir déplacé le dossier ou changé de runtime Java. |
 | "In-process compilation skipped ... the classpath cache is missing" | Exécutez `javaguard warmup` (ou laissez une exécution end-of-turn la reconstruire). |
 | "git refuses to read this repository ... dubious ownership" | Le dépôt appartient à un autre utilisateur (typique dans les conteneurs et les dossiers partagés) ; git ne répond donc pas et les modifications faites par le shell ne peuvent pas être détectées. Si vous lui faites confiance : `git config --global --add safe.directory <chemin>`. `javaguard doctor` affiche le même avertissement. |
 | "No Maven executable or wrapper found" | Installez Maven/Gradle ou ajoutez le wrapper (`mvnw`, `gradlew`) ; `doctor` montre ce qui a été trouvé. |
@@ -705,6 +788,7 @@ recoupent). Le catalogue complet, avec ce que détecte chaque règle, se trouve 
 | JG-ARCH-001 | Forbidden dependency | M | F |
 | JG-SUP-001 | Suppression without reason | M | F |
 | JG-SUP-002 | Agent-added suppression (when disallowed) | B | F |
+| JG-SUP-003 | Configuration ou hooks de JavaGuard modifiés pendant la session | B | F |
 
 ## 11. Licence
 

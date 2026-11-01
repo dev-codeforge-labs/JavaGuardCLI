@@ -54,7 +54,7 @@ and how to fix it, so you review working code instead of repairing it.
 
 Everything else - the hooks of each agent, commands, every configuration key, false positives and suppressions,
 troubleshooting, the rule list - is in the user manual, [USAGE.md](javaguard-dist/src/main/dist/USAGE.md), which also ships
-in both zips.
+in both zips. Translations: [Español](javaguard-dist/src/main/dist/usage_es.md) and [Français](javaguard-dist/src/main/dist/usage_fr.md).
 
 ## How it works
 
@@ -153,21 +153,22 @@ blocking decision belongs to the post-edit rule, which blocks only when a method
 
 ### Performance
 
-Median over several runs through the packaged executable, Windows:
+Median over several runs through the packaged executable, Windows, after `javaguard install` (which builds the start-up archive
+`app.jsa` in the folder where the distribution lives; without it every hook starts about 0.4 s slower, and `doctor` says so):
 
 | Scenario | Target | Measured |
 |---|---|---|
-| JVM start to main (`--version`) | 250 ms | 258 ms |
-| Pre-edit snapshot | 300 ms | 307 ms |
-| Post-edit, 300-line file, no classpath cache | 800 ms | 707 ms |
-| Post-edit, 300-line file, warm cache (p95) | 1.5 s | 1.03 s |
-| End of turn, nothing changed | 500 ms | 445 ms |
-| End-of-turn overhead over `mvn test` alone | 1.0 s | 1.2 - 1.4 s |
+| JVM start to main (`--version`) | 250 ms | 218 ms |
+| Pre-edit snapshot | 300 ms | 262 ms |
+| Post-edit, 300-line file, no classpath cache | 800 ms | 612 ms |
+| Post-edit, 300-line file, warm cache (p95) | 1.5 s | 0.87 s |
+| End of turn, nothing changed | 500 ms | 376 ms |
+| End-of-turn overhead over `mvn test` alone | 1.0 s | 1.2 - 1.3 s |
 
-Start-up and the end-of-turn overhead are slightly above their targets (the executable launches a bundled JVM and the gate adds
-analysis to the build); the suite's asserted limits are 300 ms, 350 ms and 1.5 s. The portable jar on Linux (Docker) starts in
-about 115 ms and answers a post-edit in 0.8 s without a classpath cache and 1.3 s with it; the start of each turn adds about
-0.25 s (a JVM and a `git status`).
+The end-of-turn overhead is above its target (the gate adds analysis to the build); the suite's asserted limit is 1.5 s. The
+portable jar on Linux (Docker) starts in about 115 ms and answers a post-edit in 0.8 s without a classpath cache and 1.3 s
+with it; the start of each turn adds about 0.25 s (a JVM and a `git status`). Those Linux figures were taken before the
+start-up archive was built on the machine, so they are an upper bound.
 
 ### Verified with real agents (Windows, October 2026)
 

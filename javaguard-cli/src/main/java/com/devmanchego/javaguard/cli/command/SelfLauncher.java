@@ -27,9 +27,20 @@ final class SelfLauncher {
         if (explicitCommand != null && !explicitCommand.isBlank()) {
             return Optional.of(ClaudeHookConfig.quoteExecutable(explicitCommand.strip()));
         }
+        // The packaged launchers (exe, javaguard, javaguard.cmd) say who they are: they start the JVM with its options.
+        String declared = System.getProperty("javaguard.launcher");
+        if (declared != null && !declared.isBlank() && Files.isRegularFile(Path.of(declared))) {
+            return Optional.of(ClaudeHookConfig.quoteExecutable(declared));
+        }
         Optional<Path> self = ProcessHandle.current().info().command().map(Path::of);
         if (self.isPresent() && baseName(self.get()).equals("javaguard")) {
             return Optional.of(ClaudeHookConfig.quoteExecutable(self.get().toString()));
+        }
+        // javaguard.exe runs its JVM as a child process: the launcher, with its JVM options, is the parent. Writing the
+        // child (java.exe -jar) would drop the options the in-process compiler needs.
+        Optional<Path> parent = ProcessHandle.current().parent().flatMap(p -> p.info().command()).map(Path::of);
+        if (parent.isPresent() && baseName(parent.get()).equals("javaguard")) {
+            return Optional.of(ClaudeHookConfig.quoteExecutable(parent.get().toString()));
         }
         Optional<Path> jar = selfContainedJar();
         if (jar.isPresent() && self.isPresent()) {
@@ -46,7 +57,7 @@ final class SelfLauncher {
     }
 
     /** The JAR this class was loaded from, if it bundles its own dependencies (picocli is the probe). */
-    private static Optional<Path> selfContainedJar() {
+    static Optional<Path> selfContainedJar() {
         try {
             Path location = Path.of(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI());
             if (!Files.isRegularFile(location) || !location.toString().endsWith(".jar")) {

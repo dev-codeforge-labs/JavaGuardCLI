@@ -65,7 +65,9 @@ final class Sec009PathTraversal extends AbstractAstCheck {
 
     private Finding sinkFinding(AstCheckContext ctx, com.github.javaparser.ast.Node at) {
         return finding(ctx, at, "A request-controlled value is used directly to build a file path.",
-                "Validate and normalize the input (reject '..' and absolute paths) or map it through an allow-list before using it in a path.");
+                "Resolve it against a fixed base directory and check the result before use: Path p = "
+                        + "base.resolve(fileName(input)).normalize(); if (!p.startsWith(base)) reject it, where fileName(...) "
+                        + "rejects '..', separators and absolute paths. Or map the input through an allow-list of known names.");
     }
 
     private Set<String> taintedNames(MethodDeclaration method) {

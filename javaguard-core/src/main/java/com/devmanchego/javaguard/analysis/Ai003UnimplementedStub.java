@@ -60,10 +60,12 @@ final class Ai003UnimplementedStub extends AbstractAstCheck {
         Statement only = statements.get(0);
         if (only instanceof ThrowStmt throwStmt && isUnimplementedThrow(throwStmt)) {
             out.add(finding(ctx, m, "Method '" + m.getNameAsString() + "' only throws an 'unimplemented' exception.",
-                    "Implement the method, or if it is intentionally abstract, document why."));
+                    "Implement the method. If what it should do is not clear from the request and the code, stop and ask "
+                            + "the user; if subclasses are meant to implement it, declare it abstract instead."));
         } else if (only instanceof ReturnStmt returnStmt && isDefaultReturn(returnStmt) && hasStubComment(ctx, m)) {
             out.add(finding(ctx, m, "Method '" + m.getNameAsString() + "' only returns a default value next to a stub marker comment.",
-                    "Implement the method body instead of returning a placeholder default."));
+                    "Implement the method body instead of returning a placeholder default; if the intended behavior is not "
+                            + "clear, stop and ask the user."));
         }
     }
 

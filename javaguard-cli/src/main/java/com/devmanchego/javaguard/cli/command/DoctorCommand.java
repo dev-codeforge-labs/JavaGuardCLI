@@ -81,6 +81,7 @@ public final class DoctorCommand implements Callable<Integer> {
         module.ifPresent(m -> buildTool(m, effective, env, rows));
         module.ifPresent(m -> classpathCache(m, paths, rows));
         rows.add(git(root));
+        startupArchive().ifPresent(rows::add);
         rows.add(claudeHooks(root, userHome));
         otherAgentHooks(AgentHookConfig.Agent.GEMINI, root, userHome, rows);
         otherAgentHooks(AgentHookConfig.Agent.CODEX, root, userHome, rows);
@@ -176,6 +177,20 @@ public final class DoctorCommand implements Callable<Integer> {
             rows.add(new Row(Status.OK, "Classpath cache", cache.get().compileClasspath().size()
                     + " compile entries, release " + cache.get().release() + ".", ""));
         }
+    }
+
+    /** Only for the packaged distribution: the archive that halves the start-up of every hook. */
+    private static Optional<Row> startupArchive() {
+        if (Boolean.getBoolean("javaguard.training")) {
+            return Optional.empty();
+        }
+        return StartupArchive.target().map(target -> switch (StartupArchive.state(target)) {
+            case USABLE -> new Row(Status.OK, "Startup archive", target.archive().toString(), "");
+            case ABSENT -> new Row(Status.WARN, "Startup archive", "Not built: every hook starts about 0.4 s slower.",
+                    "Run 'javaguard optimize'.");
+            case UNUSABLE -> new Row(Status.WARN, "Startup archive", "Stale or unusable (the folder was moved or the JVM changed): "
+                    + "hooks start about 0.4 s slower.", "Run 'javaguard optimize --force'.");
+        });
     }
 
     private static Row git(Path root) {

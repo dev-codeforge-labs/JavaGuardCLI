@@ -261,8 +261,9 @@ public final class MavenOutputParser {
         }
         return new Finding(DEPENDENCY_RULE_ID, "Dependency cannot be resolved (possibly hallucinated)",
                 Category.DEPENDENCY, Severity.BLOCKER, "maven", Optional.empty(), 0, 0, 0, message,
-                "Verify the artifact coordinates exist in the configured repositories; prefer versions already "
-                        + "managed by the parent/BOM.",
+                "The coordinates or the version may be invented. Copy them from another module of this build or from "
+                        + "the library's documentation, prefer the version the parent/BOM manages, or use a library the "
+                        + "build already declares; if none fits, stop and ask the user.",
                 Optional.empty(), detail, Fingerprints.of(DEPENDENCY_RULE_ID, "", message));
     }
 

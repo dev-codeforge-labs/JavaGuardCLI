@@ -101,6 +101,14 @@ public final class ChangeTracker {
 
     /** Ensures every touched file has a baseline, and records the file's current state. */
     public List<TrackedFile> recordAfterEdit(HookEvent event) throws IOException {
+        return recordAfterEdit(event, gateRun(GateKind.POST_EDIT));
+    }
+
+    /**
+     * As {@link #recordAfterEdit(HookEvent)}, but noting {@code gateRun} as the run that saw the files. A caller that only records
+     * files for a later gate to analyze passes something other than a post-edit run, so that gate does not assume they were checked.
+     */
+    public List<TrackedFile> recordAfterEdit(HookEvent event, String gateRun) throws IOException {
         String session = event.sessionId();
         Map<String, FileChange> changes = new LinkedHashMap<>();
         for (FileChange change : event.changes()) {
@@ -125,7 +133,6 @@ public final class ChangeTracker {
         }
 
         // Phase C (locked): store baselines still missing, record current state for all.
-        String gateRun = gateRun(GateKind.POST_EDIT);
         List<TrackedFile> tracked = new ArrayList<>();
         try (SessionLock ignored = lock(session)) {
             Ledger ledger = readLedger(session);
@@ -265,7 +272,7 @@ public final class ChangeTracker {
         return paths.sessionDir(sessionId).resolve("baseline");
     }
 
-    private String gateRun(GateKind gate) {
+    public String gateRun(GateKind gate) {
         return clock.instant() + " " + gate.cliName();
     }
 

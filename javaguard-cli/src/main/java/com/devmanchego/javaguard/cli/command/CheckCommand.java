@@ -131,7 +131,7 @@ public final class CheckCommand implements Callable<Integer> {
             if (!files.isEmpty()) {
                 List<FileChange> changes = files.stream().map(f -> FileChange.rewrite(f, ChangeType.UPDATE)).toList();
                 tracker.recordAfterEdit(new HookEvent(AgentKind.MANUAL, GateKind.POST_EDIT, session, root, Optional.empty(), "check",
-                        changes, false, Optional.empty(), clock.instant()));
+                        changes, false, Optional.empty(), clock.instant()), tracker.gateRun(GateKind.END_OF_TURN));
             } else {
                 notes.add("No changed files against HEAD.");
             }

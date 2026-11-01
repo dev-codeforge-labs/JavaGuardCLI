@@ -57,6 +57,17 @@ class CheckFullCommandTest extends CommandTestBase {
     }
 
     @Test
+    void theFullCheckRunsTheFileLocalRulesToo() throws Exception {
+        Path app = projectRoot.resolve(APP);
+        Files.writeString(app, Files.readString(app).replace("public class App {",
+                "public class App {\n    public void todo() {\n        throw new UnsupportedOperationException();\n    }"));
+
+        run("check", "--full", app.toString());
+
+        assertThat(stdout()).as(stderr()).contains("JG-AI-003");
+    }
+
+    @Test
     void aCleanChangePassesTheFullCheck() throws Exception {
         Path app = projectRoot.resolve(APP);
         Files.writeString(app, Files.readString(app).replace("public class App {", "public class App {\n    // a comment"));

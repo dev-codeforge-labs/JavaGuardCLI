@@ -9,7 +9,7 @@ if not defined JAR (
   exit /b 4
 )
 if defined JAVA_HOME (set "JAVA=%JAVA_HOME%\bin\java.exe") else (set "JAVA=java")
-"%JAVA%" -XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xss1m -Xmx1g ^
+"%JAVA%" "-Djavaguard.launcher=%~f0" "-XX:SharedArchiveFile=%HERE%app.jsa" -Xlog:disable -XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xss1m -Xmx1g ^
   --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED ^
   --add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED ^
   --add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED ^

@@ -2,12 +2,14 @@ package com.devmanchego.javaguard.cli;
 
 import com.devmanchego.javaguard.cli.command.BaselineCommand;
 import com.devmanchego.javaguard.cli.command.CaptureCommand;
+import com.devmanchego.javaguard.cli.command.CdsTrainCommand;
 import com.devmanchego.javaguard.cli.command.CheckCommand;
 import com.devmanchego.javaguard.cli.command.ConsultRunCommand;
 import com.devmanchego.javaguard.cli.command.DoctorCommand;
 import com.devmanchego.javaguard.cli.command.HandoffCommand;
 import com.devmanchego.javaguard.cli.command.HookCommand;
 import com.devmanchego.javaguard.cli.command.InstallCommand;
+import com.devmanchego.javaguard.cli.command.OptimizeCommand;
 import com.devmanchego.javaguard.cli.command.RulesCommand;
 import com.devmanchego.javaguard.cli.command.StateCommand;
 import com.devmanchego.javaguard.cli.command.UninstallCommand;
@@ -37,6 +39,8 @@ import java.util.concurrent.Callable;
                 UninstallCommand.class,
                 DoctorCommand.class,
                 WarmupCommand.class,
+                OptimizeCommand.class,
+                CdsTrainCommand.class,
                 CaptureCommand.class,
                 HandoffCommand.class,
                 RulesCommand.class,

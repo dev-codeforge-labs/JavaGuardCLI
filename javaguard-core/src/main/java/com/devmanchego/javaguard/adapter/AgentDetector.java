@@ -18,7 +18,8 @@ public final class AgentDetector {
             "BeforeTool", "AfterTool", "BeforeAgent", "AfterAgent",
             "BeforeModel", "AfterModel", "BeforeToolSelection");
 
-    private static final Set<String> SHARED_EVENTS = Set.of("PreToolUse", "PostToolUse", "Stop");
+    // SessionStart: Claude Code's payload (session_id, transcript_path, source) has no "model", so it falls to CLAUDE.
+    private static final Set<String> SHARED_EVENTS = Set.of("PreToolUse", "PostToolUse", "Stop", "SessionStart");
 
     private AgentDetector() {
     }

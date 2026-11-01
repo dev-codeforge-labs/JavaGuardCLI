@@ -130,13 +130,13 @@ class PackagedDistIT {
 
     @Test
     void thePackageHasEverythingSection21Lists() throws IOException {
-        for (String name : List.of("javaguard.exe", "app.jsa", "javaguard-" + VERSION + "-all.jar", "plugins/findsecbugs-plugin.jar",
+        for (String name : List.of("javaguard.exe", "javaguard-" + VERSION + "-all.jar", "plugins/findsecbugs-plugin.jar",
                 "runtime/bin/java.exe", "README.md", "USAGE.md", "LICENSE", "NOTICE", "THIRD-PARTY.txt")) {
             assertThat(STAGE.resolve(name)).as(name).isRegularFile();
         }
         Path windows = TARGET.resolve("javaguard-" + VERSION + "-windows-x64.zip");
         Path portable = TARGET.resolve("javaguard-" + VERSION + "-portable.zip");
-        assertThat(entries(windows)).contains("javaguard-" + VERSION + "/javaguard.exe", "javaguard-" + VERSION + "/app.jsa",
+        assertThat(entries(windows)).contains("javaguard-" + VERSION + "/javaguard.exe",
                 "javaguard-" + VERSION + "/runtime/bin/java.exe", "javaguard-" + VERSION + "/plugins/findsecbugs-plugin.jar",
                 "javaguard-" + VERSION + "/LICENSE", "javaguard-" + VERSION + "/README.md", "javaguard-" + VERSION + "/USAGE.md");
         assertThat(entries(portable)).contains("javaguard-" + VERSION + "/javaguard-" + VERSION + "-all.jar",
@@ -163,6 +163,140 @@ class PackagedDistIT {
         assertThat(doctor.exit()).as(doctor.stdout() + doctor.stderr()).isZero();
         assertThat(doctor.stdout()).contains("[OK  ] Java runtime").contains("with the compiler module")
                 .contains("[OK  ] SpotBugs").contains("findsecbugs-plugin.jar").contains("[OK  ] Project");
+    }
+
+    @Test
+    void aRelocatedDistributionStillPrintsOnlyItsOwnOutput() throws Exception {
+        assertRelocatedRunIsClean(work.resolve("relocated dir"));
+    }
+
+    @Test
+    void aRelocatedDistributionWithAccentsInThePathRuns() throws Exception {
+        assertRelocatedRunIsClean(work.resolve("ubicación ñandú çü"));
+    }
+
+    @Test
+    void aRelocatedDistributionWithALongPathRuns() throws Exception {
+        // Windows CreateProcess refuses an executable path of 260 characters or more (also for java.exe), so the longest
+        // supported layout is just under that; the deepest file of the runtime is much deeper than the executable.
+        Path base = work;
+        while (base.resolve("javaguard-" + VERSION).resolve("javaguard.exe").toString().length() < 200) {
+            base = base.resolve("a-deliberately-long-directory-name");
+        }
+        assertRelocatedRunIsClean(base);
+    }
+
+    private Path copyOfTheDistribution(Path parent) throws IOException {
+        Path moved = parent.resolve("javaguard-" + VERSION);
+        try (Stream<Path> walk = Files.walk(STAGE)) {
+            for (Path source : (Iterable<Path>) walk::iterator) {
+                Path target = moved.resolve(STAGE.relativize(source).toString());
+                if (Files.isDirectory(source)) {
+                    Files.createDirectories(target);
+                } else {
+                    Files.copy(source, target);
+                }
+            }
+        }
+        return moved;
+    }
+
+    private static Outcome run(Path exe, Path cwd, String... args) throws IOException, InterruptedException {
+        List<String> command = new ArrayList<>(List.of(exe.toString()));
+        command.addAll(List.of(args));
+        Process process = new ProcessBuilder(command).directory(cwd.toFile()).start();
+        process.getOutputStream().close();
+        byte[] out = process.getInputStream().readAllBytes();
+        byte[] err = process.getErrorStream().readAllBytes();
+        assertThat(process.waitFor(300, TimeUnit.SECONDS)).as("the executable exits").isTrue();
+        return new Outcome(process.exitValue(), new String(out, StandardCharsets.UTF_8), new String(err, StandardCharsets.UTF_8));
+    }
+
+    private void assertRelocatedRunIsClean(Path parent) throws Exception {
+        Path moved = copyOfTheDistribution(parent);
+        Path project = project("relocated" + Math.abs(parent.toString().hashCode()));
+
+        Outcome version = run(moved.resolve("javaguard.exe"), project, "--version");
+
+        // A JVM warning (for example about a class-data archive recorded with another path) goes to stdout, where the agents
+        // read the hook's JSON. Whatever archive travelled with the copy, it must be ignored silently.
+        assertThat(version.stdout().strip()).as(version.stderr()).isEqualTo("javaguard " + VERSION);
+        assertThat(version.stderr()).doesNotContain("[warning]");
+    }
+
+    @Test
+    void optimizeBuildsTheStartupArchiveWhereTheDistributionLivesAndRepairsIt() throws Exception {
+        Path moved = copyOfTheDistribution(work.resolve("ubicación nueva"));
+        Path exe = moved.resolve("javaguard.exe");
+        Path archive = moved.resolve("app.jsa");
+        archive.toFile().setWritable(true);
+        Files.deleteIfExists(archive);
+        Path project = project("optimize");
+        String hookJson = payloads("claude", "post-edit", project, project.resolve(APP), "opt");
+
+        Outcome before = run(exe, project, "--project-dir", project.toString(), "doctor");
+        assertThat(before.stdout()).contains("[WARN] Startup archive").contains("javaguard optimize");
+
+        Outcome built = run(exe, project, "optimize");
+        assertThat(built.exit()).as(built.stdout() + built.stderr()).isZero();
+        assertThat(archive).isRegularFile();
+        assertThat(Files.size(archive)).isGreaterThan(1_000_000L);
+        assertThat(moved.toFile().list()).noneMatch(name -> name.contains(".tmp-"));
+        Outcome current = run(exe, project, "optimize");
+        assertThat(current.stdout()).contains("is up to date");
+        Outcome doctor = run(exe, project, "--project-dir", project.toString(), "doctor");
+        assertThat(doctor.stdout()).contains("[OK  ] Startup archive");
+        Outcome hook = viaExeAt(exe, hookJson, project, "hook", "--agent", "claude", "--gate", "post-edit");
+        assertThat(hook.stderr()).doesNotContain("[warning]");
+        assertThat(hook.stdout()).doesNotContain("[warning]");
+
+        // An interrupted or damaged archive is ignored without a word, and `optimize` notices and rebuilds it.
+        assertThat(archive.toFile().setWritable(true)).isTrue();
+        Files.write(archive, new byte[8192]);
+        Outcome damaged = run(exe, project, "--version");
+        assertThat(damaged.stdout().strip()).isEqualTo("javaguard " + VERSION);
+        assertThat(damaged.stderr()).doesNotContain("[warning]");
+        assertThat(run(exe, project, "--project-dir", project.toString(), "doctor").stdout()).contains("[WARN] Startup archive");
+        assertThat(run(exe, project, "optimize").exit()).isZero();
+        assertThat(run(exe, project, "--project-dir", project.toString(), "doctor").stdout()).contains("[OK  ] Startup archive");
+    }
+
+    private static Outcome viaExeAt(Path exe, String stdin, Path cwd, String... args) throws IOException, InterruptedException {
+        List<String> command = new ArrayList<>(List.of(exe.toString()));
+        command.addAll(List.of(args));
+        Process process = new ProcessBuilder(command).directory(cwd.toFile()).start();
+        process.getOutputStream().write(stdin.getBytes(StandardCharsets.UTF_8));
+        process.getOutputStream().close();
+        byte[] out = process.getInputStream().readAllBytes();
+        byte[] err = process.getErrorStream().readAllBytes();
+        assertThat(process.waitFor(300, TimeUnit.SECONDS)).as("the executable exits").isTrue();
+        return new Outcome(process.exitValue(), new String(out, StandardCharsets.UTF_8), new String(err, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void installWritesTheExecutableItselfAndTheCallOperatorForCodexOnWindows() throws Exception {
+        Path project = project("install-codex");
+        Outcome install = run(EXE, project, "--project-dir", project.toString(), "install", "--agent", "codex", "--dry-run");
+
+        assertThat(install.exit()).as(install.stderr()).isZero();
+        // The launcher must be javaguard.exe, not the java.exe child it starts: the child lacks the JVM options it carries.
+        String launcher = EXE.toString().replace('\\', '/');
+        assertThat(install.stdout()).contains("\"commandWindows\": \"& \\\"" + launcher + "\\\" hook --agent codex --gate post-edit\"")
+                .doesNotContain("runtime/bin/java");
+    }
+
+    @Test
+    void thePortableLauncherInstallsItselfNotTheJvmItStarts() throws Exception {
+        Path project = project("install-portable");
+        Path launcher = PORTABLE.resolve("javaguard.cmd");
+        assumeTrue(Files.isRegularFile(launcher), "portable layout not built");
+
+        Outcome install = run(launcher, project, "--project-dir", project.toString(), "install", "--agent", "codex", "--dry-run");
+
+        assertThat(install.exit()).as(install.stdout() + install.stderr()).isZero();
+        String expected = launcher.toString().replace('\\', '/');
+        assertThat(install.stdout()).contains("\"commandWindows\": \"& \\\"" + expected + "\\\" hook --agent codex --gate post-edit\"")
+                .doesNotContain("-jar");
     }
 
     @Test
@@ -289,7 +423,7 @@ class PackagedDistIT {
 
         StringBuilder report = new StringBuilder("# Distribution size and latency report\n\n## Sizes\n\n| Item | MB |\n|---|---|\n");
         for (Path file : List.of(TARGET.resolve("javaguard-" + VERSION + "-windows-x64.zip"), TARGET.resolve("javaguard-" + VERSION + "-portable.zip"),
-                STAGE.resolve("javaguard-" + VERSION + "-all.jar"), STAGE.resolve("app.jsa"), STAGE.resolve("javaguard.exe"),
+                STAGE.resolve("javaguard-" + VERSION + "-all.jar"), STAGE.resolve("javaguard.exe"),
                 STAGE.resolve("plugins/findsecbugs-plugin.jar"))) {
             report.append("| ").append(TARGET.getParent().relativize(file.toAbsolutePath().normalize()).toString().replace('\\', '/'))
                     .append(" | ").append(String.format("%.1f", Files.size(file) / 1_048_576.0)).append(" |\n");

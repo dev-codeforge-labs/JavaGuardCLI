@@ -34,6 +34,8 @@ class AgentDetectorTest {
             "{\"hook_event_name\":\"PostToolUse\",\"tool_use_id\":\"x\",\"tool_name\":\"Edit\"} | CLAUDE",
             "{\"hook_event_name\":\"Stop\"}                                               | CLAUDE",
             "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Write\"}                 | CLAUDE",
+            "{\"hook_event_name\":\"SessionStart\",\"source\":\"startup\",\"transcript_path\":\"C:/x.jsonl\"} | CLAUDE",
+            "{\"hook_event_name\":\"SessionStart\",\"model\":\"gpt-6-luna\",\"source\":\"startup\",\"permission_mode\":\"default\"} | CODEX",
     })
     void detectsFromPayloadAlone(String payload, AgentKind expected) throws Exception {
         assertThat(AgentDetector.detect(json(payload), Map.of())).contains(expected);

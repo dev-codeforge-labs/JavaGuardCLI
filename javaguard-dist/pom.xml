@@ -15,7 +15,7 @@
 
   <name>JavaGuardCLI :: dist</name>
   <description>
-    Packaging: shade -&gt; jlink -&gt; AppCDS -&gt; Launch4j -&gt; zip (specification
+    Packaging: shade -&gt; jlink -&gt; Launch4j -&gt; zip (specification
     section 21). The real distribution is built in Phase 19; this module also
     hosts the throwaway Phase 0 packaging spike (com.devmanchego.javaguard.dist.spike)
     that validates the stdin/stdout/exit-code plumbing of a Launch4j console
@@ -173,7 +173,7 @@
       mvn -Pdist verify           also runs the packaged-executable tests (src/test, *IT) and writes target/dist/size-report.md
 
       shade (fat jar, services merged, FindSecBugs kept out) -> Launch4j (console exe, external jar) -> antrun:
-      jdeps + explicit modules -> jlink -> base CDS dump -> AppCDS training run -> assembly of both zips (specification 21).
+      jdeps + explicit modules -> jlink -> base CDS dump -> assembly of both zips (specification 21).
     -->
     <profile>
       <id>dist</id>
@@ -274,7 +274,9 @@
                     <requires64Bit>true</requires64Bit>
                     <minVersion>21</minVersion>
                     <opts>
-                      <opt>-XX:SharedArchiveFile=%EXEDIR%\app.jsa</opt>
+                      <opt>-Djavaguard.launcher="%EXEFILE%"</opt>
+                      <opt>-XX:SharedArchiveFile="%EXEDIR%\app.jsa"</opt>
+                      <opt>-Xlog:disable</opt>
                       <opt>-XX:TieredStopAtLevel=1</opt>
                       <opt>-XX:+UseSerialGC</opt>
                       <opt>-Xss1m</opt>
@@ -344,18 +346,15 @@
                       <arg line="-Xshare:dump"/>
                     </exec>
 
-                    <!-- 3. the package layout, then the AppCDS training run from inside it -->
+                    <!-- 3. the package layout. No class-data archive in it: a dynamic archive records the absolute path of the jar it was dumped
+                         from, so one built here would break (with warnings on stdout) as soon as the folder moves. `javaguard install` /
+                         `javaguard optimize` build it where the distribution lives; the launchers point at it and ignore it when absent. -->
+                    <delete quiet="true">
+                      <fileset dir="${dist.stage}" includes="app.jsa,app.jsa.tmp-*"/>
+                    </delete>
                     <copy file="${fat.jar}" todir="${dist.stage}"/>
                     <mkdir dir="${dist.stage}/plugins"/>
                     <copy file="${settings.localRepository}/com/h3xstream/findsecbugs/findsecbugs-plugin/${findsecbugs.version}/findsecbugs-plugin-${findsecbugs.version}.jar" tofile="${dist.stage}/plugins/findsecbugs-plugin.jar"/>
-                    <delete dir="${project.build.directory}/dist/training" quiet="true"/>
-                    <copy todir="${project.build.directory}/dist/training/project">
-                      <fileset dir="${project.basedir}/../javaguard-core/src/test/resources/fixtures/maven-simple"/>
-                    </copy>
-                    <delete file="${dist.stage}/app.jsa" quiet="true"/>
-                    <exec executable="${runtime.dir}/bin/java" failonerror="true" dir="${project.build.directory}/dist/training">
-                      <arg line="-XX:ArchiveClassesAtExit=${dist.stage}/app.jsa ${dist.jvm.flags} -Dfile.encoding=UTF-8 ${exports} -cp ${dist.stage}/${dist.fatjar} com.devmanchego.javaguard.dist.training.TrainingRun ${project.build.directory}/dist/training/project"/>
-                    </exec>
 
                     <!-- 4. documents and the two zips -->
                     <copy file="${project.basedir}/../README.md" todir="${dist.stage}"/>

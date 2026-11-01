@@ -42,8 +42,8 @@ final class Tst013ProductionCodeDetectsTests extends AbstractAstCheck {
             String name = imp.getNameAsString();
             if (TEST_PACKAGES.stream().anyMatch(p -> name.equals(p) || name.startsWith(p + "."))) {
                 out.add(finding(ctx, imp, "Production code imports the test framework '" + name + "'.",
-                        "Production code must not depend on test frameworks; move the logic to tests or remove the "
-                                + "special case."));
+                        "Remove the import. If behavior must differ in tests, inject it (a constructor parameter or a "
+                                + "configuration property) and pass a fake from the test."));
             }
         }
         for (MethodCallExpr call : ctx.unit().findAll(MethodCallExpr.class)) {
@@ -51,7 +51,8 @@ final class Tst013ProductionCodeDetectsTests extends AbstractAstCheck {
                     && call.getArgument(0) instanceof StringLiteralExpr literal
                     && TEST_PACKAGES.stream().anyMatch(p -> literal.getValue().startsWith(p))) {
                 out.add(finding(ctx, call, "Production code probes for the test framework class '" + literal.getValue() + "'.",
-                        "Do not make production behavior depend on whether a test framework is present."));
+                        "Remove the probe. If behavior must differ in tests, inject it (a constructor parameter or a "
+                                + "configuration property) and pass a fake from the test."));
             }
         }
         for (MethodDeclaration method : ctx.unit().findAll(MethodDeclaration.class)) {
@@ -64,12 +65,14 @@ final class Tst013ProductionCodeDetectsTests extends AbstractAstCheck {
                     .filter(s -> TEST_MARKER.matcher(s.getValue()).find())
                     .findFirst()
                     .ifPresent(s -> out.add(finding(ctx, s, "Production code inspects the stack trace for a test marker ('"
-                            + s.getValue() + "').", "Do not special-case behavior on the caller being a test.")));
+                            + s.getValue() + "').", "Remove the stack check. If behavior must differ in tests, inject it (a constructor "
+                            + "parameter or a configuration property) and pass a fake from the test.")));
         }
         for (StringLiteralExpr literal : ctx.unit().findAll(StringLiteralExpr.class)) {
             if (TEST_MODE.matcher(literal.getValue()).find()) {
                 out.add(finding(ctx, literal, "Production code reads a test-mode switch ('" + literal.getValue() + "').",
-                        "Remove the test-mode branch; tests must exercise the real behavior."));
+                        "Remove the test-mode branch; tests must exercise the real behavior, replacing only "
+                                + "collaborators (injected fakes or mocks)."));
             }
         }
         return out;

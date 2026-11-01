@@ -1,6 +1,7 @@
 package com.devmanchego.javaguard.cli.command;
 
 import com.devmanchego.javaguard.change.ChangeTracker;
+import com.devmanchego.javaguard.gate.ConfigGuard;
 import com.devmanchego.javaguard.change.GitClient;
 import com.devmanchego.javaguard.cli.ExitCode;
 import com.devmanchego.javaguard.cli.Main;
@@ -30,7 +31,7 @@ public final class BaselineCommand implements Callable<Integer> {
     }
 
     @Command(mixinStandardHelpOptions = true, name = "reset",
-            description = "Forget baselines so the next gate treats current contents as the baseline.")
+            description = "Forget baselines (and the recorded JavaGuard configuration) so the next gate treats current contents as the baseline.")
     static final class ResetCommand implements Callable<Integer> {
 
         @ParentCommand
@@ -45,9 +46,12 @@ public final class BaselineCommand implements Callable<Integer> {
             ChangeTracker tracker = new ChangeTracker(paths, GitClient.none(), Clock.systemUTC());
             try {
                 List<String> sessions = session != null ? List.of(session) : tracker.sessions();
+                ConfigGuard guard = new ConfigGuard(paths, java.nio.file.Path.of(System.getProperty("user.home")));
                 for (String s : sessions) {
                     tracker.resetBaselines(s);
                 }
+                // The configuration recorded at the start of the session too: what is on disk now becomes the baseline.
+                guard.reset(session);
                 System.out.println("javaguard baseline reset: " + sessions.size() + " session(s) reset in "
                         + paths.stateDir());
                 return ExitCode.SUCCESS.code();

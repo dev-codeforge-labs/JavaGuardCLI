@@ -81,7 +81,8 @@ public final class SuppressionFilter {
                         Severity.BLOCKER,
                         "New suppression of " + m.ruleId() + " added this session; agent-added suppressions are "
                                 + "disabled (suppressions.allowAgentAdded=false).",
-                        "Remove the suppression and fix the finding, or ask the user to approve it."));
+                        "Remove the suppression and fix the finding. If it is a genuine false positive, stop and explain "
+                                + "it to the user, who can add the suppression."));
             } else if (m.reason().isEmpty()) {
                 suppressionFindings.add(finding(relativePath, m, MISSING_REASON_RULE, "Suppression without reason",
                         Severity.MAJOR,

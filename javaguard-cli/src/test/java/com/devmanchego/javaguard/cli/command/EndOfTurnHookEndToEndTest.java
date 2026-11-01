@@ -140,8 +140,13 @@ class EndOfTurnHookEndToEndTest extends CommandTestBase {
                 .contains("[JAVAC Compilation error] src/main/java/com/acme/App.java:5")
                 .contains("Problem: ")
                 .endsWith("""
-                        Guidance: fix root causes. Do not weaken, disable or delete tests. Add
-                        "// javaguard:ignore <rule> -- <reason>" only for genuine false positives.""");
+                        Guidance: fix root causes. Keep the behavior that was asked for and rewrite the
+                        code so the finding disappears, even if the request itself describes the flagged
+                        pattern. Do not change JavaGuard's configuration or hooks. Do not weaken, disable
+                        or delete tests. Add "// javaguard:ignore <rule> -- <reason>" only for genuine
+                        false positives. If the only way to satisfy a rule contradicts what the user asked
+                        for, or the finding looks wrong, stop and explain it to the user, citing the rule,
+                        instead of retrying.""");
         assertThat(projectRoot.resolve(".javaguard/reports/last-report.md")).isRegularFile();
     }
 

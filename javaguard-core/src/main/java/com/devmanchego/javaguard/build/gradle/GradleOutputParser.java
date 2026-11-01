@@ -160,8 +160,9 @@ public final class GradleOutputParser {
         }
         return new Finding(MavenOutputParser.DEPENDENCY_RULE_ID, "Dependency cannot be resolved (possibly hallucinated)",
                 Category.DEPENDENCY, Severity.BLOCKER, "gradle", Optional.empty(), 0, 0, 0, message,
-                "Verify the artifact coordinates exist in the configured repositories; prefer versions already "
-                        + "managed by the version catalog or the platform/BOM.",
+                "The coordinates or the version may be invented. Copy them from another module of this build or from "
+                        + "the library's documentation, prefer the version the version catalog or platform/BOM manages, "
+                        + "or use a library the build already declares; if none fits, stop and ask the user.",
                 Optional.empty(), detail, Fingerprints.of(MavenOutputParser.DEPENDENCY_RULE_ID, "", message));
     }
 

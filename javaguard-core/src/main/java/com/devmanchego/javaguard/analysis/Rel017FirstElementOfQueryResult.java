@@ -45,7 +45,8 @@ final class Rel017FirstElementOfQueryResult extends AbstractAstCheck {
             }
             if ((isQuery(source) || fromVariable(call, source)) && !handled(call)) {
                 out.add(finding(ctx, call, "The first element of a query result is read without checking that the result is not empty.",
-                        "Check isEmpty() first, or use a query that returns Optional (findFirstBy..., getFirst on a Optional-returning method)."));
+                        "Check isEmpty() before reading it, or read it as an Optional: list.stream().findFirst() or a "
+                                + "findFirstBy... repository method, then orElseThrow(...) or orElse(...)."));
             }
         }
         return out;

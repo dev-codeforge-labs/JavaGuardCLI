@@ -43,8 +43,8 @@ final class Spr001ProxyAnnotationHasNoEffect extends AbstractAstCheck {
             if (why != null) {
                 out.add(finding(ctx, method, "@" + proxyAnnotation + " on the " + why + " method " + method.getNameAsString()
                         + "() is ignored: Spring cannot proxy it.",
-                        "Make the method non-private, non-final and non-static, or move the logic to a bean method "
-                                + "that is called through the proxy."));
+                        "Make the method public, non-final and non-static and call it from another bean, or move it to a "
+                                + "separate @Service bean that the callers inject."));
             }
         }
         return out;
