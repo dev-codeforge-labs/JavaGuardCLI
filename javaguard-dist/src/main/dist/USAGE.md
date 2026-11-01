@@ -634,6 +634,8 @@ lives in another module of the build, the finding means the name really is unkno
 
 ## 10. Rules
 
+[rules.md](rules.md) ([Español](rules_es.md), [Français](rules_fr.md)) explains every rule in detail: what it catches, why it matters in production and how the agent is told to fix it.
+
 `javaguard rules` prints every rule with its effective configuration. Severity: B = BLOCKER, C = CRITICAL, M = MAJOR,
 I = INFO. Gate: F = post-edit and end-of-turn, E = end-of-turn only. Besides these, the post-edit gate reports PMD
 (`PMD:<rule>`) and Error Prone (`EP:<check>`) findings and javac errors (`JAVAC`); the end-of-turn gate reports test failures

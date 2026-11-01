@@ -119,6 +119,8 @@ class ConsultWorkerTest {
         String classes = Path.of(FakeConsult.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
         DetachedConsultRunner runner = new DetachedConsultRunner(() -> java.util.List.of(javaExe, "-cp", classes, FakeConsult.class.getName(), "marker"));
 
+        java.util.Set<Long> alreadyRunning = ProcessHandle.current().children().map(ProcessHandle::pid)
+                .collect(java.util.stream.Collectors.toSet());
         runner.start(new ConsultRunner.Launch(root, SESSION, AgentKind.GEMINI));
 
         Path marker = root.resolve("marker.txt");
@@ -129,5 +131,18 @@ class ConsultWorkerTest {
         }
         assertThat(Files.readString(marker)).contains("consult-run --session sess-w-1 --agent gemini");
         assertThat(paths.logsDir().resolve("consult-sess-w-1.log")).exists();
+        awaitExit(alreadyRunning);
+    }
+
+    /**
+     * The worker runs in the project directory and appends to a log inside it: on Windows neither can be deleted while the
+     * process is alive, so the temporary directory cannot be cleaned up until it has exited.
+     */
+    private static void awaitExit(java.util.Set<Long> alreadyRunning) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 20_000;
+        while (System.currentTimeMillis() < deadline
+                && ProcessHandle.current().children().anyMatch(p -> !alreadyRunning.contains(p.pid()) && p.isAlive())) {
+            Thread.sleep(100);
+        }
     }
 }

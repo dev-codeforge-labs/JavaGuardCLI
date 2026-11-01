@@ -662,6 +662,8 @@ tranquille. Si l'entité vit dans un autre module du build, le constat signifie 
 
 ## 10. Règles
 
+[rules_fr.md](rules_fr.md) ([English](rules.md), [Español](rules_es.md)) explique chaque règle en détail : ce qu'elle détecte, pourquoi elle compte en production et comment l'agent doit la corriger.
+
 `javaguard rules` imprime chaque règle avec sa configuration effective. Gravité : B = BLOCKER, C = CRITICAL, M = MAJOR,
 I = INFO. Barrière : F = post-edit et end-of-turn, E = end-of-turn seulement. En plus de celles-ci, la barrière post-edit
 signale des constats de PMD (`PMD:<règle>`) et d'Error Prone (`EP:<contrôle>`) et des erreurs javac (`JAVAC`) ; la barrière

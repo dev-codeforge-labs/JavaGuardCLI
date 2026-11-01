@@ -652,6 +652,8 @@ entidad vive en otro módulo de la compilación, el hallazgo significa que el no
 
 ## 10. Reglas
 
+[rules_es.md](rules_es.md) ([English](rules.md), [Français](rules_fr.md)) explica cada regla en detalle: qué detecta, por qué importa en producción y cómo se le dice al agente que la arregle.
+
 `javaguard rules` imprime cada regla con su configuración efectiva. Severidad: B = BLOCKER, C = CRITICAL, M = MAJOR,
 I = INFO. Puerta: F = post-edit y end-of-turn, E = solo end-of-turn. Además de estas, la puerta post-edit informa de hallazgos
 de PMD (`PMD:<regla>`) y de Error Prone (`EP:<comprobación>`) y de errores de javac (`JAVAC`); la puerta end-of-turn informa
